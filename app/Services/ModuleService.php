@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
+use App\Services\Core\Setting\Setting;
 
 class ModuleService
 {
@@ -37,14 +37,20 @@ class ModuleService
     {
         $config = config('modules', []);
 
-        $dbOverrides = Setting::where('group', 'modules')->get();
+        try {
+            $dbOverrides = Setting::where('group', 'modules')->get();
 
-        foreach ($dbOverrides as $setting) {
-            $parts = explode('.', $setting->key, 3);
+            foreach ($dbOverrides as $setting) {
+                $parts = explode('.', $setting->key, 3);
 
-            if (count($parts) >= 2 && $parts[1] === 'enabled') {
-                data_set($config, "{$parts[0]}.enabled", $setting->getTypedValue());
+                if (count($parts) === 3 && $parts[0] === 'modules' && $parts[2] === 'enabled') {
+                    data_set($config, "{$parts[1]}.enabled", $setting->getTypedValue());
+                }
             }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('ModuleService: Failed to load settings from DB', [
+                'error' => $e->getMessage(),
+            ]);
         }
 
         $this->cache = $config;

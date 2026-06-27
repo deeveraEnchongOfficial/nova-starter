@@ -11,7 +11,7 @@ class CheckPermission
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         if (! $request->user()) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('Unauthorized action.'));
         }
 
         $permissions = collect($permissions)
@@ -25,6 +25,6 @@ class CheckPermission
             }
         }
 
-        abort(403, 'You do not have permission to access this resource.');
+        abort(403, __('You do not have permission to access this resource.'));
     }
 }

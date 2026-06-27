@@ -13,6 +13,7 @@ import {
 } from '@/Components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/types';
+import { usePermission } from '@/hooks/use-permission';
 
 interface RoleRow {
     id: number;
@@ -34,6 +35,7 @@ interface PaginatedRoles {
 export default function RolesIndex({
     roles,
 }: PageProps<{ roles: PaginatedRoles }>) {
+    const { hasPermission } = usePermission();
     const handleDelete = (id: number, name: string) => {
         if (name === 'Super Admin') {
             alert('Cannot delete the Super Admin role.');
@@ -56,12 +58,14 @@ export default function RolesIndex({
                         <h1 className="text-2xl font-bold tracking-tight">Roles & Permissions</h1>
                         <p className="text-muted-foreground">Manage roles and their permissions.</p>
                     </div>
-                    <Button asChild>
-                        <Link href={route('roles.create')}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Role
-                        </Link>
-                    </Button>
+                    {hasPermission('roles.create') && (
+                        <Button asChild>
+                            <Link href={route('roles.create')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Role
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <Card>
@@ -102,18 +106,22 @@ export default function RolesIndex({
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button asChild variant="ghost" size="icon">
-                                                    <Link href={route('roles.edit', role.id)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleDelete(role.id, role.name)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
+                                                {hasPermission('roles.edit') && (
+                                                    <Button asChild variant="ghost" size="icon">
+                                                        <Link href={route('roles.edit', role.id)}>
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                                {hasPermission('roles.delete') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDelete(role.id, role.name)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

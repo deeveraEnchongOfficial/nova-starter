@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
+use App\Services\Core\Setting\Setting;
 
 class BrandingService
 {

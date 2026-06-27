@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Services\Core\User\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 

@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\App\Core\Setting;
 
-use App\Models\Setting;
+use App\Services\Core\Setting\Setting;
 use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Http\Controllers\Controller;
 
 class SettingController extends Controller
 {

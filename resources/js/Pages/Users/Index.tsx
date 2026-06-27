@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { PageProps } from '@/types';
+import { usePermission } from '@/hooks/use-permission';
 
 interface UserRow {
     id: number;
@@ -39,6 +40,7 @@ export default function UsersIndex({
     filters,
 }: PageProps<{ users: PaginatedUsers; filters: { search?: string } }>) {
     const [search, setSearch] = useState(filters.search || '');
+    const { hasPermission } = usePermission();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,12 +65,14 @@ export default function UsersIndex({
                         <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
                         <p className="text-muted-foreground">Manage application users and their roles.</p>
                     </div>
-                    <Button asChild>
-                        <Link href={route('users.create')}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add User
-                        </Link>
-                    </Button>
+                    {hasPermission('users.create') && (
+                        <Button asChild>
+                            <Link href={route('users.create')}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add User
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <Card>
@@ -119,18 +123,22 @@ export default function UsersIndex({
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button asChild variant="ghost" size="icon">
-                                                    <Link href={route('users.edit', user.id)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleDelete(user.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
+                                                {hasPermission('users.edit') && (
+                                                    <Button asChild variant="ghost" size="icon">
+                                                        <Link href={route('users.edit', user.id)}>
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                                {hasPermission('users.delete') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDelete(user.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
