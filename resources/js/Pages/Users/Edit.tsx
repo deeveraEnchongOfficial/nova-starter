@@ -45,7 +45,7 @@ export default function UsersEdit({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Edit User</h2>}
+            header={<h1 className="text-xl font-semibold">Edit User</h1>}
         >
             <Head title={`Edit ${user.name}`} />
 
@@ -62,7 +62,7 @@ export default function UsersEdit({
                     </div>
                 </div>
 
-                <Card className="max-w-2xl">
+                <Card>
                     <CardHeader>
                         <CardTitle>User Details</CardTitle>
                         <CardDescription>Leave password blank to keep unchanged.</CardDescription>

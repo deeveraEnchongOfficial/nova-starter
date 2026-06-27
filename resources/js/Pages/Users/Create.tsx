@@ -37,7 +37,7 @@ export default function UsersCreate({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Create User</h2>}
+            header={<h1 className="text-xl font-semibold">Create User</h1>}
         >
             <Head title="Create User" />
 
@@ -54,7 +54,7 @@ export default function UsersCreate({
                     </div>
                 </div>
 
-                <Card className="max-w-2xl">
+                <Card>
                     <CardHeader>
                         <CardTitle>User Details</CardTitle>
                         <CardDescription>Enter the user information and assign roles.</CardDescription>

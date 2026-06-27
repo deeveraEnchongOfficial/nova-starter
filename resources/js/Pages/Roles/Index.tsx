@@ -48,7 +48,7 @@ export default function RolesIndex({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Roles & Permissions</h2>}
+            header={<h1 className="text-xl font-semibold">Roles & Permissions</h1>}
         >
             <Head title="Roles & Permissions" />
 

@@ -48,7 +48,7 @@ export default function RolesEdit({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Edit Role</h2>}
+            header={<h1 className="text-xl font-semibold">Edit Role</h1>}
         >
             <Head title={`Edit ${role.name}`} />
 
@@ -65,7 +65,7 @@ export default function RolesEdit({
                     </div>
                 </div>
 
-                <Card className="max-w-2xl">
+                <Card>
                     <CardHeader>
                         <CardTitle>Role Details</CardTitle>
                         <CardDescription>Modify the role and its assigned permissions.</CardDescription>

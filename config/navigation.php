@@ -26,12 +26,13 @@ return [
                 'icon' => 'ShieldCheck',
                 'permission' => 'roles.view',
             ],
-            [
-                'label' => 'Settings',
-                'route' => 'settings.index',
-                'icon' => 'Settings',
-                'permission' => 'settings.view',
-            ],
         ],
+    ],
+    [
+        'label' => 'Settings',
+        'route' => 'settings.index',
+        'icon' => 'Settings',
+        'permission' => 'settings.view',
+        'children' => null,
     ],
 ];

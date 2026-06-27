@@ -1,11 +1,12 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import { Checkbox } from '@/Components/ui/checkbox';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { Loader2, LogIn } from 'lucide-react';
 
 export default function Login({
     status,
@@ -32,79 +33,118 @@ export default function Login({
         <GuestLayout>
             <Head title="Log in" />
 
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
-                            }
-                        />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Remember me
-                        </span>
-                    </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
+            <Card className="max-w-sm gap-4">
+                <CardHeader>
+                    <CardTitle className="text-lg tracking-tight">Sign in</CardTitle>
+                    <CardDescription>
+                        Enter your email and password below to log into{' '}
+                        <br className="max-sm:hidden" /> your account. Don't have an
+                        account?{' '}
                         <Link
-                            href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            href={route('register')}
+                            className="text-nowrap underline underline-offset-4 hover:text-primary"
                         >
-                            Forgot your password?
+                            Sign Up
                         </Link>
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                    {status && (
+                        <div className="mb-4 text-sm font-medium text-green-600 dark:text-green-400">
+                            {status}
+                        </div>
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
-                    </PrimaryButton>
-                </div>
-            </form>
+                    <form onSubmit={submit} className="grid gap-3">
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                name="email"
+                                value={data.email}
+                                placeholder="name@example.com"
+                                autoComplete="username"
+                                autoFocus
+                                onChange={(e) => setData('email', e.target.value)}
+                            />
+                            {errors.email && (
+                                <p className="text-sm text-destructive">{errors.email}</p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                {canResetPassword && (
+                                    <Link
+                                        href={route('password.request')}
+                                        className="text-sm font-medium text-muted-foreground hover:opacity-75"
+                                    >
+                                        Forgot password?
+                                    </Link>
+                                )}
+                            </div>
+                            <Input
+                                id="password"
+                                type="password"
+                                name="password"
+                                value={data.password}
+                                placeholder="********"
+                                autoComplete="current-password"
+                                onChange={(e) => setData('password', e.target.value)}
+                            />
+                            {errors.password && (
+                                <p className="text-sm text-destructive">{errors.password}</p>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="remember"
+                                name="remember"
+                                checked={data.remember}
+                                onCheckedChange={(checked) =>
+                                    setData('remember', checked as boolean)
+                                }
+                            />
+                            <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
+                                Remember me
+                            </Label>
+                        </div>
+
+                        <Button type="submit" className="mt-2" disabled={processing}>
+                            {processing ? (
+                                <Loader2 className="animate-spin" />
+                            ) : (
+                                <LogIn />
+                            )}
+                            Sign in
+                        </Button>
+                    </form>
+                </CardContent>
+
+                <CardFooter>
+                    <p className="px-8 text-center text-sm text-muted-foreground">
+                        By clicking sign in, you agree to our{' '}
+                        <a
+                            href="#"
+                            className="underline underline-offset-4 hover:text-primary"
+                        >
+                            Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a
+                            href="#"
+                            className="underline underline-offset-4 hover:text-primary"
+                        >
+                            Privacy Policy
+                        </a>
+                        .
+                    </p>
+                </CardFooter>
+            </Card>
         </GuestLayout>
     );
 }

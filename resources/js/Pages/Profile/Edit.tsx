@@ -12,31 +12,28 @@ export default function Edit({
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                <h1 className="text-xl font-semibold">
                     Profile
-                </h2>
+                </h1>
             }
         >
             <Head title="Profile" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+            <div className="space-y-6">
+                    <div className="rounded-lg border bg-card p-4 text-card-foreground sm:p-8">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
-                            className="max-w-xl"
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
+                    <div className="rounded-lg border bg-card p-4 text-card-foreground sm:p-8">
+                        <UpdatePasswordForm />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
+                    <div className="rounded-lg border bg-card p-4 text-card-foreground sm:p-8">
+                        <DeleteUserForm />
                     </div>
-                </div>
             </div>
         </AuthenticatedLayout>
     );

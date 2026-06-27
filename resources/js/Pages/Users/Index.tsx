@@ -55,7 +55,7 @@ export default function UsersIndex({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Users</h2>}
+            header={<h1 className="text-xl font-semibold">Users</h1>}
         >
             <Head title="Users" />
 

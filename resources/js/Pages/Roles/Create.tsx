@@ -41,7 +41,7 @@ export default function RolesCreate({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight">Create Role</h2>}
+            header={<h1 className="text-xl font-semibold">Create Role</h1>}
         >
             <Head title="Create Role" />
 
@@ -58,7 +58,7 @@ export default function RolesCreate({
                     </div>
                 </div>
 
-                <Card className="max-w-2xl">
+                <Card>
                     <CardHeader>
                         <CardTitle>Role Details</CardTitle>
                         <CardDescription>Enter the role name and select permissions.</CardDescription>

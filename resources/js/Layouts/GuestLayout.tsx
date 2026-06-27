@@ -1,17 +1,21 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Link } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
+import type { PageProps } from '@/types';
 
 export default function Guest({ children }: PropsWithChildren) {
-    return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
-            </div>
+    const { branding } = usePage<PageProps>().props;
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
+    return (
+        <div className="container grid h-svh max-w-none items-center justify-center">
+            <div className="mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:p-8">
+                <div className="mb-4 flex items-center justify-center">
+                    <div className="me-2 flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <span className="text-sm font-bold">
+                            {branding.short_name?.charAt(0) || branding.name.charAt(0)}
+                        </span>
+                    </div>
+                    <h1 className="text-xl font-medium">{branding.name}</h1>
+                </div>
                 {children}
             </div>
         </div>
