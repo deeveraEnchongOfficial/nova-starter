@@ -1,0 +1,14 @@
+node_modules
+vendor
+.git
+.gitignore
+*.md
+docker-compose.yml
+.env
+database/database.sqlite
+public/build
+bootstrap/ssr
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
