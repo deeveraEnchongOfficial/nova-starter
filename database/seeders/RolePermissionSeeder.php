@@ -4,11 +4,12 @@ namespace Database\Seeders;
 
 use App\Services\Core\Role\Permission;
 use App\Services\Core\Role\Role;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
 {
-    public function run(): void
+    public function run(?Model $tenant = null): void
     {
         $permissions = [
             'users.view', 'users.create', 'users.edit', 'users.delete',
@@ -17,19 +18,35 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            $model = Permission::firstOrNew(['name' => $permission]);
+            if ($tenant) {
+                $model->tenant_type = 'core.organization';
+                $model->tenant_id = $tenant->getKey();
+            }
+            $model->save();
         }
 
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
+        $createRole = function (string $name) use ($tenant): Role {
+            $model = Role::firstOrNew(['name' => $name]);
+            if ($tenant) {
+                $model->tenant_type = 'core.organization';
+                $model->tenant_id = $tenant->getKey();
+            }
+            $model->save();
+
+            return $model;
+        };
+
+        $superAdmin = $createRole('Super Admin');
         $superAdmin->syncPermissions($permissions);
 
-        $admin = Role::firstOrCreate(['name' => 'Admin']);
+        $admin = $createRole('Admin');
         $admin->syncPermissions([
             'users.view', 'users.create', 'users.edit',
             'roles.view',
             'settings.view',
         ]);
 
-        $user = Role::firstOrCreate(['name' => 'User']);
+        $createRole('User');
     }
 }

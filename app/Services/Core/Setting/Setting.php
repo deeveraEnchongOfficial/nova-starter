@@ -40,7 +40,7 @@ class Setting extends Model
         return $setting->getTypedValue();
     }
 
-    public static function set(string $key, mixed $value, string $type = 'string', string $group = 'general', bool $isPublic = false): void
+    public static function set(string $key, mixed $value, string $type = 'string', string $group = 'general', bool $isPublic = false, ?Model $tenant = null): void
     {
         $encoded = match ($type) {
             'boolean' => $value ? '1' : '0',
@@ -48,9 +48,16 @@ class Setting extends Model
             default => (string) $value,
         };
 
+        $data = ['value' => $encoded, 'type' => $type, 'group' => $group, 'is_public' => $isPublic];
+
+        if ($tenant) {
+            $data['tenant_type'] = 'core.organization';
+            $data['tenant_id'] = $tenant->getKey();
+        }
+
         static::updateOrCreate(
             ['key' => $key],
-            ['value' => $encoded, 'type' => $type, 'group' => $group, 'is_public' => $isPublic]
+            $data
         );
     }
 }

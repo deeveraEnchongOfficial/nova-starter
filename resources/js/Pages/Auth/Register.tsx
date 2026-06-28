@@ -12,7 +12,10 @@ export default function Register({ features }: PageProps) {
     const isMultiTenant = features.multi_tenant;
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
+        role: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -51,19 +54,65 @@ export default function Register({ features }: PageProps) {
                 <CardContent>
                     <form onSubmit={submit} className="grid gap-3">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="first_name">First Name</Label>
                             <Input
-                                id="name"
-                                name="name"
-                                value={data.name}
-                                placeholder="John Doe"
-                                autoComplete="name"
+                                id="first_name"
+                                name="first_name"
+                                value={data.first_name}
+                                placeholder="John"
+                                autoComplete="given-name"
                                 autoFocus
-                                onChange={(e) => setData('name', e.target.value)}
+                                onChange={(e) => setData('first_name', e.target.value)}
                                 required
                             />
-                            {errors.name && (
-                                <p className="text-sm text-destructive">{errors.name}</p>
+                            {errors.first_name && (
+                                <p className="text-sm text-destructive">{errors.first_name}</p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="middle_name">Middle Name</Label>
+                            <Input
+                                id="middle_name"
+                                name="middle_name"
+                                value={data.middle_name}
+                                placeholder=""
+                                autoComplete="additional-name"
+                                onChange={(e) => setData('middle_name', e.target.value)}
+                            />
+                            {errors.middle_name && (
+                                <p className="text-sm text-destructive">{errors.middle_name}</p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="last_name">Last Name</Label>
+                            <Input
+                                id="last_name"
+                                name="last_name"
+                                value={data.last_name}
+                                placeholder="Doe"
+                                autoComplete="family-name"
+                                onChange={(e) => setData('last_name', e.target.value)}
+                                required
+                            />
+                            {errors.last_name && (
+                                <p className="text-sm text-destructive">{errors.last_name}</p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="role">Role</Label>
+                            <Input
+                                id="role"
+                                name="role"
+                                value={data.role}
+                                placeholder="e.g. Super Admin, Manager, Developer, etc."
+                                onChange={(e) => setData('role', e.target.value)}
+                                required
+                            />
+                            {errors.role && (
+                                <p className="text-sm text-destructive">{errors.role}</p>
                             )}
                         </div>
 

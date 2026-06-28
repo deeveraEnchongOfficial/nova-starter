@@ -22,6 +22,13 @@ class User extends Authenticatable
     use BelongsToATenant, HasApiTokens, HasCreatedBy, HasFactory, HasRoles, Notifiable, ServiceModel, Unguarded;
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<string>
+     */
+    protected $appends = ['name'];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -36,8 +43,9 @@ class User extends Authenticatable
     public function name(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $value,
-            set: fn ($value) => $value,
+            get: fn () => trim(collect([$this->first_name, $this->middle_name, $this->last_name])
+                ->filter()
+                ->implode(' ')),
         );
     }
 

@@ -15,7 +15,8 @@ class UserController extends Controller
     {
         $users = User::with('roles')
             ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             })
             ->orderBy('created_at', 'desc')
@@ -40,14 +41,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('core.users')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'roles' => ['array'],
             'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
-        $user = User::create($request->only('name', 'email', 'password'));
+        $user = User::create($request->only('first_name', 'middle_name', 'last_name', 'email', 'password'));
 
         if ($request->has('roles')) {
             $roleModels = Role::whereIn('_id', $request->roles)->get();
@@ -72,14 +75,16 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('core.users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'roles' => ['array'],
             'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
-        $user->fill($request->only('name', 'email'));
+        $user->fill($request->only('first_name', 'middle_name', 'last_name', 'email'));
 
         if ($request->filled('password')) {
             $user->password = $request->password;
