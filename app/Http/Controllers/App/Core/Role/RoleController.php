@@ -5,12 +5,17 @@ namespace App\Http\Controllers\App\Core\Role;
 use App\Http\Controllers\Controller;
 use App\Services\Core\Role\Permission;
 use App\Services\Core\Role\Role;
+use App\Services\Core\Role\Actions\UpsertRole;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class RoleController extends Controller
 {
+    public function __construct(
+        private readonly UpsertRole $upsertRole,
+    ) {}
+
     public function index()
     {
         $roles = Role::with('permissions')
@@ -43,12 +48,11 @@ class RoleController extends Controller
             'permissions.*' => [Rule::exists('core.permissions', '_id')],
         ]);
 
-        $role = Role::create(['name' => $request->name]);
-
-        if ($request->has('permissions')) {
-            $permissionModels = Permission::whereIn('_id', $request->permissions)->get();
-            $role->syncPermissions($permissionModels);
-        }
+        $this->upsertRole->execute(
+            new Role,
+            $validated['name'],
+            permissions: ! empty($validated['permissions']) ? Permission::whereIn('_id', $validated['permissions'])->get() : [],
+        );
 
         return redirect()->route('roles.index')
             ->with('message', 'Role created successfully.');
@@ -73,12 +77,11 @@ class RoleController extends Controller
             'permissions.*' => [Rule::exists('core.permissions', '_id')],
         ]);
 
-        $role->update(['name' => $request->name]);
-
-        if ($request->has('permissions')) {
-            $permissionModels = Permission::whereIn('_id', $request->permissions)->get();
-            $role->syncPermissions($permissionModels);
-        }
+        $this->upsertRole->execute(
+            $role,
+            $validated['name'],
+            permissions: ! empty($validated['permissions']) ? Permission::whereIn('_id', $validated['permissions'])->get() : [],
+        );
 
         return redirect()->route('roles.index')
             ->with('message', 'Role updated successfully.');

@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\App\Core\User;
 
-use App\Services\Core\Role\Role;
-use App\Services\Core\User\User;
 use App\Http\Controllers\Controller;
+use App\Services\Core\Role\Role;
+use App\Services\Core\User\Actions\UpsertUser;
+use App\Services\Core\User\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly UpsertUser $upsertUser,
+    ) {}
+
     public function index(Request $request)
     {
         $users = User::with('roles')
@@ -50,10 +55,19 @@ class UserController extends Controller
             'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
-        $user = User::create($request->only('first_name', 'middle_name', 'last_name', 'email', 'password'));
+        $user = $this->upsertUser->execute(
+            new User,
+            $validated['first_name'],
+            $validated['middle_name'],
+            $validated['last_name'],
+            $validated['email'],
+            tenant: null,
+            password: $validated['password'],
+            createdBy: $request->user(),
+        );
 
-        if ($request->has('roles')) {
-            $roleModels = Role::whereIn('_id', $request->roles)->get();
+        if (! empty($validated['roles'])) {
+            $roleModels = Role::whereIn('_id', $validated['roles'])->get();
             $user->assignRole($roleModels);
         }
 
@@ -84,16 +98,17 @@ class UserController extends Controller
             'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
-        $user->fill($request->only('first_name', 'middle_name', 'last_name', 'email'));
+        $this->upsertUser->execute(
+            $user,
+            $validated['first_name'],
+            $validated['middle_name'],
+            $validated['last_name'],
+            $validated['email'],
+            password: $validated['password'] ?? null,
+        );
 
-        if ($request->filled('password')) {
-            $user->password = $request->password;
-        }
-
-        $user->save();
-
-        if ($request->has('roles')) {
-            $roleModels = Role::whereIn('_id', $request->roles)->get();
+        if (! empty($validated['roles'])) {
+            $roleModels = Role::whereIn('_id', $validated['roles'])->get();
             $user->syncRoles($roleModels);
         }
 

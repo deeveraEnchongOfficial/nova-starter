@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\App\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Core\Organization\Actions\UpsertOrganization;
 use App\Services\Core\Organization\Organization;
 use App\Services\Core\Organization\OrganizationStatus;
+use App\Services\Core\Role\Actions\UpsertRole;
 use App\Services\Core\Role\Permission;
 use App\Services\Core\Role\Role;
+use App\Services\Core\User\Actions\UpsertUser;
 use App\Services\Core\User\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +24,12 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(
+        private readonly UpsertUser $upsertUser,
+        private readonly UpsertOrganization $upsertOrganization,
+        private readonly UpsertRole $upsertRole,
+    ) {}
+
     /**
      * Display the registration view.
      */
@@ -58,23 +67,36 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ];
 
+        $organization = null;
+
         if ($isMultiTenant) {
-            $organization = Organization::create([
-                'name' => $request->organization_name,
-                'status' => OrganizationStatus::ACTIVE,
-                'is_active' => true,
-            ]);
-
-            $userData['tenant_type'] = 'core.organization';
-            $userData['tenant_id'] = $organization->_id;
+            $organization = $this->upsertOrganization->execute(
+                new Organization,
+                $request->organization_name,
+                OrganizationStatus::ACTIVE->value,
+                true,
+            );
         }
 
-        $user = User::create($userData);
+        $user = $this->upsertUser->execute(
+            new User,
+            $userData['first_name'],
+            $userData['middle_name'],
+            $userData['last_name'],
+            $userData['email'],
+            tenant: $isMultiTenant ? $organization : null,
+            password: $userData['password'],
+        );
 
-        $role = Role::firstOrCreate(['name' => $request->role]);
-        if ($role->permissions()->count() === 0) {
-            $role->syncPermissions(Permission::all());
-        }
+        $roleModel = Role::where('name', $request->role)->first() ?? new Role;
+        $permissions = $roleModel->permissions()->count() === 0 ? Permission::all()->all() : [];
+
+        $role = $this->upsertRole->execute(
+            $roleModel,
+            $request->role,
+            tenant: $isMultiTenant ? $organization : null,
+            permissions: $permissions,
+        );
         $user->assignRole($role);
 
         event(new Registered($user));

@@ -12,11 +12,12 @@ class UpsertUser
      */
     public function execute(
         User $user,
-        Model $tenant,
         string $firstName,
         ?string $middleName,
         ?string $lastName,
         string $email,
+        ?Model $tenant = null,
+        ?string $password = null,
         ?string $avatarFileId = null,
         array $metadata = [],
         ?Model $createdBy = null,
@@ -31,10 +32,16 @@ class UpsertUser
             '__metadata' => $metadata,
         ];
 
+        if ($password !== null) {
+            $userData['password'] = $password;
+        }
+
         $user->forceFill($userData);
 
-        // Associate the user with the tenant
-        $user->tenant()->associate($tenant);
+        if (config('features.multi_tenant', false) && $tenant) {
+            // Associate the user with the tenant
+            $user->tenant()->associate($tenant);
+        }
 
         // Set the created_by if this is a new user
         if ((! $user->exists || ! $user->createdBy) && $createdBy) {

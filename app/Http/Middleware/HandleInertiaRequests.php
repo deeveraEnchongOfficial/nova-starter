@@ -31,6 +31,11 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'roles' => $user->getRoleNames()->toArray(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+                    'tenant' => $user->tenant ? [
+                        'id' => $user->tenant->getKey(),
+                        'type' => $user->tenant_type,
+                        'name' => $user->tenant->name ?? null,
+                    ] : null,
                 ] : null,
             ],
             'branding' => app(BrandingService::class)->all(),

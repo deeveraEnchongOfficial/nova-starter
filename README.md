@@ -27,8 +27,10 @@ A reusable, modular, and highly configurable Laravel + Inertia.js + React + shad
 - API token management via Sanctum
 - Dynamic app name and branding (configurable via `.env` or database)
 - Authentication (login, register, password reset, email verification)
-- User management (CRUD + role assignment)
-- Role and permission management (CRUD + permission assignment)
+- User management (CRUD + role assignment) via `UpsertUser` action
+- Role and permission management (CRUD + permission assignment) via `UpsertRole` action
+- Organization management via `UpsertOrganization` action
+- Upsert action pattern for centralized create/update logic across all entities
 - Settings management (branding, modules, features)
 - Dynamic navigation/sidebar (config-driven, permission-filtered)
 - Theme customization (light/dark/system mode toggle, configurable radius & primary color)
@@ -238,16 +240,21 @@ nova-starter/
 │   │       │   ├── UserStatus.php             # Enum: active, inactive, blocked, locked
 │   │       │   ├── UserLoginType.php          # Enum
 │   │       │   ├── UserRepository.php         # Search + lookup queries
-│   │       │   └── Actions/                   # (reserved for user actions)
+│   │       │   └── Actions/
+│   │       │       └── UpsertUser.php         # Create/update user action
 │   │       ├── Role/
-│   │       │   ├── Role.php                   # Spatie Role with tenant support
-│   │       │   └── Permission.php             # Spatie Permission
+│   │       │   ├── Role.php                   # Spatie Role with tenant + created_by support
+│   │       │   ├── Permission.php             # Spatie Permission
+│   │       │   └── Actions/
+│   │       │       └── UpsertRole.php         # Create/update role action
 │   │       ├── Setting/
 │   │       │   ├── Setting.php                # Key-value settings with typed values
 │   │       │   └── Actions/                   # (reserved for setting actions)
 │   │       ├── Organization/
 │   │       │   ├── Organization.php           # Org model with member relationships
-│   │       │   └── OrganizationStatus.php     # Enum: active, suspended, pending
+│   │       │   ├── OrganizationStatus.php     # Enum: active, suspended, pending
+│   │       │   └── Actions/
+│   │       │       └── UpsertOrganization.php # Create/update organization action
 │   │       └── PersonalAccessToken/
 │   │           └── PersonalAccessToken.php    # Sanctum token with string IDs
 │   └── Support/
@@ -352,6 +359,23 @@ nova-starter/
 | User | (none by default) |
 
 Permissions: `users.view`, `users.create`, `users.edit`, `users.delete`, `roles.view`, `roles.create`, `roles.edit`, `roles.delete`, `settings.view`, `settings.edit`
+
+## Upsert Action Pattern
+
+All entity creation and updates go through dedicated **Upsert action** classes located in `app/Services/{Service}/Actions/`. Controllers are responsible for finding the entity (or creating a `new` instance) and passing it to the action. The action handles `forceFill`, tenant association, `createdBy` association, permission syncing, and saving.
+
+| Action | Location | Purpose |
+|---|---|---|
+| `UpsertUser` | `app/Services/Core/User/Actions/` | Create/update users with tenant, password, and createdBy support |
+| `UpsertRole` | `app/Services/Core/Role/Actions/` | Create/update roles with tenant, permissions, and createdBy support |
+| `UpsertOrganization` | `app/Services/Core/Organization/Actions/` | Create/update organizations with createdBy support |
+
+**Convention:**
+- Controllers find the entity (e.g., `Role::where('name', $name)->first() ?? new Role`)
+- Controllers pass the entity instance + validated data to the upsert action
+- Actions handle `forceFill`, `tenant()->associate()`, `createdBy()->associate()`, `save()`, and permission syncing
+- Password is only set when explicitly provided (non-null)
+- Tenant is only associated when multi-tenant is enabled and a tenant model is passed
 
 ## Service-Based Architecture
 
