@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers\App\Core\Setting;
 
+use App\Http\Controllers\Controller;
 use App\Services\Core\Setting\Setting;
+use App\Services\Core\Setting\SettingRepository;
 use App\Services\ModuleService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Http\Controllers\Controller;
 
 class SettingController extends Controller
 {
+    public function __construct(
+        private readonly SettingRepository $settingRepository,
+    ) {}
+
     public function index()
     {
-        $settings = Setting::orderBy('group')->orderBy('key')->get();
+        $settings = $this->settingRepository->findAll();
 
         $grouped = $settings->groupBy('group')->map(function ($items) {
             return $items->mapWithKeys(function ($item) {

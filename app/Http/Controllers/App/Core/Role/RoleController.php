@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\App\Core\Role;
 
 use App\Http\Controllers\Controller;
-use App\Services\Core\Role\Permission;
+use App\Services\Core\Role\PermissionRepository;
 use App\Services\Core\Role\Role;
+use App\Services\Core\Role\RoleRepository;
 use App\Services\Core\Role\Actions\UpsertRole;
+use App\Services\Core\Role\Actions\DeleteRole;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -14,13 +16,17 @@ class RoleController extends Controller
 {
     public function __construct(
         private readonly UpsertRole $upsertRole,
+        private readonly DeleteRole $deleteRole,
+        private readonly RoleRepository $roleRepository,
+        private readonly PermissionRepository $permissionRepository,
     ) {}
 
     public function index()
     {
-        $roles = Role::with('permissions')
-            ->orderBy('name')
-            ->paginate(10);
+        $roles = $this->roleRepository->paginateAll(
+            perPage: 10,
+            with: ['permissions'],
+        );
 
         $roles->getCollection()->each(function ($role) {
             $role->users_count = $role->users()->count();
@@ -33,7 +39,7 @@ class RoleController extends Controller
 
     public function create()
     {
-        $permissions = Permission::orderBy('name')->get(['id', 'name']);
+        $permissions = $this->permissionRepository->findAll();
 
         return Inertia::render('Roles/Create', [
             'permissions' => $permissions,
@@ -51,7 +57,7 @@ class RoleController extends Controller
         $this->upsertRole->execute(
             new Role,
             $validated['name'],
-            permissions: ! empty($validated['permissions']) ? Permission::whereIn('_id', $validated['permissions'])->get() : [],
+            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions']) : [],
         );
 
         return redirect()->route('roles.index')
@@ -60,7 +66,7 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
-        $permissions = Permission::orderBy('name')->get(['id', 'name']);
+        $permissions = $this->permissionRepository->findAll();
         $role->load('permissions');
 
         return Inertia::render('Roles/Edit', [
@@ -80,21 +86,21 @@ class RoleController extends Controller
         $this->upsertRole->execute(
             $role,
             $validated['name'],
-            permissions: ! empty($validated['permissions']) ? Permission::whereIn('_id', $validated['permissions'])->get() : [],
+            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions']) : [],
         );
 
         return redirect()->route('roles.index')
             ->with('message', 'Role updated successfully.');
     }
 
-    public function destroy(Role $role)
+    public function destroy(Request $request, Role $role)
     {
         if ($role->name === 'Super Admin') {
             return redirect()->route('roles.index')
-                ->with('error', 'Cannot delete the Super Admin role.');
+                    ->with('error', 'Cannot delete the Super Admin role.');
         }
 
-        $role->delete();
+        $this->deleteRole->execute($role, $request->user());
 
         return redirect()->route('roles.index')
             ->with('message', 'Role deleted successfully.');

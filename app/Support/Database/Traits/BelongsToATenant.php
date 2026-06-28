@@ -4,6 +4,7 @@ namespace App\Support\Database\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Auth;
 use LogicException;
 
 trait BelongsToATenant
@@ -42,4 +43,31 @@ trait BelongsToATenant
     {
         return $query->whereMorphedTo('tenant', $tenant);
     }
+
+    /**
+     * Scope a query based on the multi-tenant configuration.
+     *
+     * - Multi-tenant enabled: scope to the authenticated user's tenant.
+     * - Multi-tenant disabled: exclude records that have a tenant set
+     *   (only return records belonging to no tenant).
+     */
+    public function scopeTenantAware($query)
+    {
+        if (config('features.multi_tenant', false)) {
+            $user = Auth::user();
+
+            if ($user && $user->tenant_id && $user->tenant_type) {
+                return $query->where('tenant_type', $user->tenant_type)
+                    ->where('tenant_id', $user->tenant_id);
+            }
+
+            // No authenticated user with tenant — return nothing
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Multi-tenant disabled — only return records without a tenant
+        return $query->whereNull('tenant_id')
+            ->whereNull('tenant_type');
+    }
 }
+

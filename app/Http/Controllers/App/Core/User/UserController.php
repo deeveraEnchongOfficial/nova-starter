@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Core\Role\Role;
 use App\Services\Core\User\Actions\UpsertUser;
 use App\Services\Core\User\User;
+use App\Services\Core\User\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -14,19 +15,16 @@ class UserController extends Controller
 {
     public function __construct(
         private readonly UpsertUser $upsertUser,
+        private readonly UserRepository $userRepository,
     ) {}
 
     public function index(Request $request)
     {
-        $users = User::with('roles')
-            ->when($request->search, function ($query, $search) {
-                $query->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $users = $this->userRepository->paginateAll(
+            search: $request->search,
+            perPage: 10,
+            with: ['roles'],
+        );
 
         return Inertia::render('Users/Index', [
             'users' => $users,

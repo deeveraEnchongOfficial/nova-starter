@@ -38,7 +38,7 @@ A reusable, modular, and highly configurable Laravel + Inertia.js + React + shad
 - Feature toggles (registration, 2FA, API tokens, multi-tenant, etc.)
 - Reusable shadcn/ui components (19+ components)
 - Reusable database traits (auditable, ownable, tenant-scoped, metadata, string IDs)
-- Base repository pattern with MongoDB-aware search & pagination
+- Repository pattern for all DB queries with automatic tenant-aware scoping
 - SSR support
 - Fully Dockerized
 
@@ -239,20 +239,25 @@ nova-starter/
 │   │       │   ├── User.php                   # Auth user with HasRoles, HasApiTokens
 │   │       │   ├── UserStatus.php             # Enum: active, inactive, blocked, locked
 │   │       │   ├── UserLoginType.php          # Enum
-│   │       │   ├── UserRepository.php         # Search + lookup queries
+│   │       │   ├── UserRepository.php         # Tenant-aware DB queries for users
 │   │       │   └── Actions/
 │   │       │       └── UpsertUser.php         # Create/update user action
 │   │       ├── Role/
 │   │       │   ├── Role.php                   # Spatie Role with tenant + created_by support
 │   │       │   ├── Permission.php             # Spatie Permission
+│   │       │   ├── RoleRepository.php         # Tenant-aware DB queries for roles
+│   │       │   ├── PermissionRepository.php   # Tenant-aware DB queries for permissions
 │   │       │   └── Actions/
-│   │       │       └── UpsertRole.php         # Create/update role action
+│   │       │       ├── UpsertRole.php         # Create/update role action
+│   │       │       └── DeleteRole.php         # Hard-delete role action
 │   │       ├── Setting/
 │   │       │   ├── Setting.php                # Key-value settings with typed values
+│   │       │   ├── SettingRepository.php      # Tenant-aware DB queries for settings
 │   │       │   └── Actions/                   # (reserved for setting actions)
 │   │       ├── Organization/
 │   │       │   ├── Organization.php           # Org model with member relationships
 │   │       │   ├── OrganizationStatus.php     # Enum: active, suspended, pending
+│   │       │   ├── OrganizationRepository.php # DB queries for organizations
 │   │       │   └── Actions/
 │   │       │       └── UpsertOrganization.php # Create/update organization action
 │   │       └── PersonalAccessToken/
@@ -266,13 +271,13 @@ nova-starter/
 │           │   └── AsEnumArray.php            # Custom cast for enum arrays
 │           └── Traits/
 │               ├── ServiceModel.php           # Auto-resolves DB connection by namespace
-│               ├── BelongsToATenant.php       # Multi-tenant morphTo + scope
+│               ├── BelongsToATenant.php       # Multi-tenant morphTo + tenantAware scope
 │               ├── HasOwner.php               # Polymorphic owner + history tracking
 │               ├── HasCreatedBy.php           # Polymorphic created_by
 │               ├── HasUpdatedBy.php           # Polymorphic updated_by
 │               ├── HasMetadata.php            # Dynamic __metadata field management
 │               ├── HasStringId.php            # Auto-generated string IDs (timestamp + random)
-│               ├── BaseRepository.php         # MongoDB-aware search & pagination
+│               ├── BaseRepository.php         # Tenant-aware pagination with MongoDB regex search
 │               ├── Unguarded.php              # Mass-assignment unguarded
 │               └── ForceMake.php              # Force model creation
 ├── bootstrap/
@@ -369,6 +374,7 @@ All entity creation and updates go through dedicated **Upsert action** classes l
 | `UpsertUser` | `app/Services/Core/User/Actions/` | Create/update users with tenant, password, and createdBy support |
 | `UpsertRole` | `app/Services/Core/Role/Actions/` | Create/update roles with tenant, permissions, and createdBy support |
 | `UpsertOrganization` | `app/Services/Core/Organization/Actions/` | Create/update organizations with createdBy support |
+| `DeleteRole` | `app/Services/Core/Role/Actions/` | Hard-delete roles |
 
 **Convention:**
 - Controllers find the entity (e.g., `Role::where('name', $name)->first() ?? new Role`)
@@ -376,6 +382,28 @@ All entity creation and updates go through dedicated **Upsert action** classes l
 - Actions handle `forceFill`, `tenant()->associate()`, `createdBy()->associate()`, `save()`, and permission syncing
 - Password is only set when explicitly provided (non-null)
 - Tenant is only associated when multi-tenant is enabled and a tenant model is passed
+
+## Repository Pattern
+
+All database queries go through dedicated **Repository** classes located alongside their models in `app/Services/{Service}/`. Controllers inject repositories and call their methods — no direct `Model::query()` calls in controllers.
+
+| Repository | Location | Scope |
+|---|---|---|
+| `UserRepository` | `app/Services/Core/User/` | `tenantAware()` — scoped to authenticated user's tenant |
+| `RoleRepository` | `app/Services/Core/Role/` | `tenantAware()` — scoped to authenticated user's tenant |
+| `PermissionRepository` | `app/Services/Core/Role/` | `tenantAware()` — scoped to authenticated user's tenant |
+| `SettingRepository` | `app/Services/Core/Setting/` | `tenantAware()` — scoped to authenticated user's tenant |
+| `OrganizationRepository` | `app/Services/Core/Organization/` | Unscoped (Organization is the tenant itself) |
+
+**Tenant-Aware Scoping Rule (`scopeTenantAware`):**
+- **Multi-tenant enabled (`FEATURE_MULTI_TENANT=true`):** Only returns records belonging to the authenticated user's tenant (`tenant_type` + `tenant_id` match). If no authenticated user with tenant, returns empty results.
+- **Multi-tenant disabled (`FEATURE_MULTI_TENANT=false`):** Only returns records where `tenant_id` and `tenant_type` are both `null`. Tenanted data is never exposed.
+
+**Convention:**
+- Controllers inject repositories via constructor DI
+- All repository methods use `Model::tenantAware()` (except `OrganizationRepository` which is the tenant itself)
+- `BaseRepository` trait provides `paginateWithSearch()` with MongoDB regex search + tenant-aware scoping
+- No direct `Model::` query calls in controllers — always go through the repository
 
 ## Service-Based Architecture
 
@@ -398,13 +426,13 @@ Available in `app/Support/Database/Traits/`:
 | Trait | Description |
 |---|---|
 | `ServiceModel` | Auto-resolves MongoDB connection by service namespace; includes `DocumentModel`, `HasStringId`, `Unguarded`, `ForceMake` |
-| `BelongsToATenant` | Multi-tenant polymorphic relationship with auto-tenant validation on save |
+| `BelongsToATenant` | Multi-tenant polymorphic relationship with `tenantAware` scope + auto-tenant validation on save |
 | `HasOwner` | Polymorphic owner with ownership history tracking |
 | `HasCreatedBy` | Polymorphic `createdBy` relationship |
 | `HasUpdatedBy` | Polymorphic `updatedBy` relationship |
 | `HasMetadata` | Dynamic `__metadata` field with get/set/replace helpers |
 | `HasStringId` | Auto-generates string IDs (timestamp hex + random hex) on create |
-| `BaseRepository` | MongoDB-aware pagination with regex search support |
+| `BaseRepository` | Tenant-aware pagination with MongoDB regex search support (uses `tenantAware` scope) |
 | `Unguarded` | Disables mass assignment protection |
 | `ForceMake` | Allows forced model creation |
 
@@ -434,9 +462,11 @@ Available in `app/Support/Database/Traits/`:
 
 3. Add the icon to `resources/js/lib/icons.ts`.
 
-4. Create controller (under `app/Http/Controllers/App/{Service}/`), routes, and pages.
+4. Create a repository class (under `app/Services/{Service}/`) extending `BaseRepository` for all DB queries.
 
-5. Add permissions via the Roles UI or seeder.
+5. Create controller (under `app/Http/Controllers/App/{Service}/`), inject the repository, routes, and pages.
+
+6. Add permissions via the Roles UI or seeder.
 
 ## Development Commands
 

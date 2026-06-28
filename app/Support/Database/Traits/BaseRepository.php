@@ -2,7 +2,6 @@
 
 namespace App\Support\Database\Traits;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use MongoDB\Laravel\Eloquent\Builder;
 use ReflectionClass;
@@ -13,7 +12,6 @@ trait BaseRepository
      * Paginate results with search functionality.
      */
     public function paginateWithSearch(
-        Model $tenant,
         int $page = 1,
         int $perPage = 15,
         ?string $search = null,
@@ -21,7 +19,8 @@ trait BaseRepository
         array $with = [],
         array $select = ['*'],
     ): LengthAwarePaginator {
-        $query = $this->getModelClass()::byTenant($tenant)->with($with);
+        $modelClass = $this->getModelClass();
+        $query = $modelClass::tenantAware()->with($with);
 
         if ($search && ! empty($searchFields)) {
             $query->where(function (Builder $query) use ($search, $searchFields): void {
@@ -52,3 +51,4 @@ trait BaseRepository
         return "{$namespace}\\{$modelName}";
     }
 }
+
