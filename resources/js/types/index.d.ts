@@ -45,6 +45,7 @@ export interface Branding {
 }
 
 export interface Features {
+    multi_tenant: boolean;
     user_registration: boolean;
     password_reset: boolean;
     email_verification: boolean;

@@ -6,13 +6,17 @@ import { Label } from '@/Components/ui/label';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Loader2, UserPlus } from 'lucide-react';
+import type { PageProps } from '@/types';
 
-export default function Register() {
+export default function Register({ features }: PageProps) {
+    const isMultiTenant = features.multi_tenant;
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        organization_name: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -62,6 +66,24 @@ export default function Register() {
                                 <p className="text-sm text-destructive">{errors.name}</p>
                             )}
                         </div>
+
+                        {isMultiTenant && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="organization_name">Organization Name</Label>
+                                <Input
+                                    id="organization_name"
+                                    name="organization_name"
+                                    value={data.organization_name}
+                                    placeholder="Acme Corp"
+                                    autoComplete="organization"
+                                    onChange={(e) => setData('organization_name', e.target.value)}
+                                    required
+                                />
+                                {errors.organization_name && (
+                                    <p className="text-sm text-destructive">{errors.organization_name}</p>
+                                )}
+                            </div>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>

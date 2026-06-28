@@ -2,11 +2,13 @@
 
 namespace App\Services\Core\Setting;
 
+use App\Support\Database\Traits\BelongsToATenant;
+use App\Support\Database\Traits\ServiceModel;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $fillable = ['key', 'value', 'type', 'group', 'is_public'];
+    use BelongsToATenant, ServiceModel;
 
     protected function casts(): array
     {

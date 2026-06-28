@@ -9,7 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { PageProps } from '@/types';
 
 interface Permission {
-    id: number;
+    id: string;
     name: string;
 }
 
@@ -18,7 +18,7 @@ export default function RolesCreate({
 }: PageProps<{ permissions: Permission[] }>) {
     const { data, setData, post, errors, processing } = useForm({
         name: '',
-        permissions: [] as number[],
+        permissions: [] as string[],
     });
 
     const submit = (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export default function RolesCreate({
         post(route('roles.store'));
     };
 
-    const togglePermission = (permId: number) => {
+    const togglePermission = (permId: string) => {
         setData('permissions', data.permissions.includes(permId)
             ? data.permissions.filter((id) => id !== permId)
             : [...data.permissions, permId]);

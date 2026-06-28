@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'multi_tenant' => env('FEATURE_MULTI_TENANT', false),
     'user_registration' => env('FEATURE_USER_REGISTRATION', true),
     'password_reset' => env('FEATURE_PASSWORD_RESET', true),
     'email_verification' => env('FEATURE_EMAIL_VERIFICATION', false),

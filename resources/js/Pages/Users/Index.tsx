@@ -18,11 +18,11 @@ import type { PageProps } from '@/types';
 import { usePermission } from '@/hooks/use-permission';
 
 interface UserRow {
-    id: number;
+    id: string;
     name: string;
     email: string;
     created_at: string;
-    roles: { id: number; name: string }[];
+    roles: { id: string; name: string }[];
 }
 
 interface PaginatedUsers {
@@ -47,7 +47,7 @@ export default function UsersIndex({
         router.get(route('users.index'), { search }, { preserveState: true });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (id: string) => {
         if (confirm('Are you sure you want to delete this user?')) {
             router.delete(route('users.destroy', id));
         }

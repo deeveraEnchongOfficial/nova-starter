@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\App\Core\User;
 
+use App\Services\Core\Role\Role;
 use App\Services\Core\User\User;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
-use App\Http\Controllers\Controller;
 
 class UserController extends Controller
 {
@@ -41,16 +41,17 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('core.users')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'roles' => ['array'],
-            'roles.*' => ['exists:roles,id'],
+            'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
         $user = User::create($request->only('name', 'email', 'password'));
 
         if ($request->has('roles')) {
-            $user->assignRole($request->roles);
+            $roleModels = Role::whereIn('_id', $request->roles)->get();
+            $user->assignRole($roleModels);
         }
 
         return redirect()->route('users.index')
@@ -72,10 +73,10 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('core.users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'roles' => ['array'],
-            'roles.*' => ['exists:roles,id'],
+            'roles.*' => [Rule::exists('core.roles', '_id')],
         ]);
 
         $user->fill($request->only('name', 'email'));
@@ -87,7 +88,8 @@ class UserController extends Controller
         $user->save();
 
         if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
+            $roleModels = Role::whereIn('_id', $request->roles)->get();
+            $user->syncRoles($roleModels);
         }
 
         return redirect()->route('users.index')

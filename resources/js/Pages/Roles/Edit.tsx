@@ -9,14 +9,14 @@ import { ArrowLeft } from 'lucide-react';
 import type { PageProps } from '@/types';
 
 interface Permission {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface RoleData {
-    id: number;
+    id: string;
     name: string;
-    permissions: { id: number; name: string }[];
+    permissions: { id: string; name: string }[];
 }
 
 export default function RolesEdit({
@@ -33,7 +33,7 @@ export default function RolesEdit({
         put(route('roles.update', role.id));
     };
 
-    const togglePermission = (permId: number) => {
+    const togglePermission = (permId: string) => {
         setData('permissions', data.permissions.includes(permId)
             ? data.permissions.filter((id) => id !== permId)
             : [...data.permissions, permId]);

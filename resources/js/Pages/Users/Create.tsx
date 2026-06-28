@@ -9,7 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { PageProps } from '@/types';
 
 interface Role {
-    id: number;
+    id: string;
     name: string;
 }
 
@@ -21,7 +21,7 @@ export default function UsersCreate({
         email: '',
         password: '',
         password_confirmation: '',
-        roles: [] as number[],
+        roles: [] as string[],
     });
 
     const submit = (e: React.FormEvent) => {
@@ -29,7 +29,7 @@ export default function UsersCreate({
         post(route('users.store'));
     };
 
-    const toggleRole = (roleId: number) => {
+    const toggleRole = (roleId: string) => {
         setData('roles', data.roles.includes(roleId)
             ? data.roles.filter((id) => id !== roleId)
             : [...data.roles, roleId]);

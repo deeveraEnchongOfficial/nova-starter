@@ -16,10 +16,10 @@ import type { PageProps } from '@/types';
 import { usePermission } from '@/hooks/use-permission';
 
 interface RoleRow {
-    id: number;
+    id: string;
     name: string;
     users_count: number;
-    permissions: { id: number; name: string }[];
+    permissions: { id: string; name: string }[];
 }
 
 interface PaginatedRoles {
@@ -36,7 +36,7 @@ export default function RolesIndex({
     roles,
 }: PageProps<{ roles: PaginatedRoles }>) {
     const { hasPermission } = usePermission();
-    const handleDelete = (id: number, name: string) => {
+    const handleDelete = (id: string, name: string) => {
         if (name === 'Super Admin') {
             alert('Cannot delete the Super Admin role.');
             return;

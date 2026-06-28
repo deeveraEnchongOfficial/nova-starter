@@ -9,15 +9,15 @@ import { ArrowLeft } from 'lucide-react';
 import type { PageProps } from '@/types';
 
 interface Role {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface UserData {
-    id: number;
+    id: string;
     name: string;
     email: string;
-    roles: { id: number; name: string }[];
+    roles: { id: string; name: string }[];
 }
 
 export default function UsersEdit({
@@ -37,7 +37,7 @@ export default function UsersEdit({
         put(route('users.update', user.id));
     };
 
-    const toggleRole = (roleId: number) => {
+    const toggleRole = (roleId: string) => {
         setData('roles', data.roles.includes(roleId)
             ? data.roles.filter((id) => id !== roleId)
             : [...data.roles, roleId]);
