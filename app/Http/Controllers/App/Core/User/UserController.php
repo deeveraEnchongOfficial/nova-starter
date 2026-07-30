@@ -22,13 +22,13 @@ class UserController extends Controller
     {
         $users = $this->userRepository->paginateAll(
             search: $request->search,
-            perPage: 10,
+            perPage: (int) $request->get('per_page', 10),
             with: ['roles'],
         );
 
         return Inertia::render('Users/Index', [
             'users' => $users,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'per_page']),
         ]);
     }
 
