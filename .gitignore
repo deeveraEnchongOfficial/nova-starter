@@ -2,7 +2,9 @@
 .DS_Store
 .env
 .env.backup
+.env.encrypted
 .env.production
+.devconfig
 .phpactor.json
 .phpunit.result.cache
 /.codex

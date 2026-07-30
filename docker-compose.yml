@@ -1,64 +1,129 @@
+name: 'nova-starter'
+
 services:
-    app:
-        build:
-            context: .
-            dockerfile: docker/Dockerfile
-        container_name: nova-starter-app
-        restart: unless-stopped
-        ports:
-            - "${APP_PORT:-8080}:80"
-        environment:
-            - APP_ENV=production
-            - APP_KEY=${APP_KEY:-}
-            - APP_DEBUG=false
-            - DB_CONNECTION=${DB_CONNECTION:-sqlite}
-            - DB_HOST=${DB_HOST:-db}
-            - DB_PORT=${DB_PORT:-3306}
-            - DB_DATABASE=${DB_DATABASE:-database/database.sqlite}
-            - DB_USERNAME=${DB_USERNAME:-root}
-            - DB_PASSWORD=${DB_PASSWORD:-}
-            - RUN_SEEDERS=${RUN_SEEDERS:-false}
-        volumes:
-            - app-storage:/var/www/html/storage
-            - app-bootstrap:/var/www/html/bootstrap/cache
-        depends_on:
-            - db
-        networks:
-            - nova-network
+  app:
+    build:
+      context: ./docker/8.4
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP:-1000}'
+        WWWUSER: '${WWWUSER:-1000}'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - '${LOCAL_NOVA_APP_PORT:-8000}:80'
+      - '${LOCAL_NOVA_VITE_PORT:-5173}:${LOCAL_NOVA_VITE_PORT:-5173}'
+      - '${LOCAL_NOVA_APP_XDEBUG_PORT:-9003}:9003'
+    volumes:
+      - '.:/var/www/html'
+    environment:
+      XDEBUG_CLIENT_HOST: 'host.docker.internal'
+      XDEBUG_CLIENT_PORT: '${LOCAL_NOVA_APP_XDEBUG_PORT:-9003}'
+    networks:
+      - nova-network
+    depends_on:
+      - redis
+      - mailhog
+      - mongodb
 
-    db:
-        image: mysql:8.4
-        container_name: nova-starter-db
-        restart: unless-stopped
-        environment:
-            - MYSQL_DATABASE=${DB_DATABASE:-nova_starter}
-            - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}
-        ports:
-            - "${DB_PORT:-3306}:3306"
-        volumes:
-            - db-data:/var/lib/mysql
-        networks:
-            - nova-network
-        healthcheck:
-            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/certs:/etc/nginx/certs
+    networks:
+      - nova-network
+    depends_on:
+      - app
 
-    redis:
-        image: redis:7-alpine
-        container_name: nova-starter-redis
-        restart: unless-stopped
-        ports:
-            - "${REDIS_PORT:-6379}:6379"
-        networks:
-            - nova-network
+  mongodb:
+    image: 'mongo:latest'
+    ports:
+      - '${LOCAL_NOVA_MONGODB_PORT:-27017}:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: '${DB_USERNAME:-dbuser}'
+      MONGO_INITDB_ROOT_PASSWORD: '${DB_PASSWORD:-password}'
+    volumes:
+      - 'nova-mongodb-data:/data/db'
+      - 'nova-mongodb-config:/data/configdb'
+    networks:
+      - nova-network
+
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - '${LOCAL_NOVA_REDIS_PORT:-6379}:6379'
+    volumes:
+      - 'nova-redis:/data'
+    networks:
+      - nova-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      retries: 3
+      timeout: 5s
+
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - '${LOCAL_NOVA_MAILHOG_PORT:-1025}:1025'
+      - '${LOCAL_NOVA_MAILHOG_DASHBOARD_PORT:-8025}:8025'
+    networks:
+      - nova-network
+
+  minio:
+    image: 'minio/minio:latest'
+    ports:
+      - '${LOCAL_NOVA_MINIO_API_PORT:-9000}:9000'
+      - '${LOCAL_NOVA_MINIO_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - 'nova-minio:/data'
+      - './docker/certs:/root/.minio/certs'
+    environment:
+      MINIO_ROOT_USER: '${MINIO_ROOT_USER:-minioadmin}'
+      MINIO_ROOT_PASSWORD: '${MINIO_ROOT_PASSWORD:-minioadmin}'
+    command: server /data --console-address ":9001" --address ":9000"
+    networks:
+      - nova-network
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      retries: 3
+      timeout: 5s
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - '${LOCAL_NOVA_N8N_PORT:-5678}:5678'
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-password}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Asia/Manila}
+      - DB_TYPE=sqlite
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+    volumes:
+      - 'nova-n8n:/home/node/.n8n'
+    networks:
+      - nova-network
+    extra_hosts:
+      - 'app.nova-starter.localhost:host-gateway'
+      - 'storage.nova-starter.localhost:host-gateway'
 
 volumes:
-    app-storage:
-    app-bootstrap:
-    db-data:
+  nova-mongodb-config:
+    driver: local
+  nova-mongodb-data:
+    driver: local
+  nova-redis:
+    driver: local
+  nova-minio:
+    driver: local
+  nova-n8n:
+    driver: local
 
 networks:
-    nova-network:
-        driver: bridge
+  nova-network:
+    driver: bridge
