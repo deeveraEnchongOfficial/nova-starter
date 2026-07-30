@@ -16,7 +16,7 @@ A reusable, modular, and highly configurable Laravel + Inertia.js + React + shad
 - **Routing:** Tightenco Ziggy (named routes in JS)
 - **Charts:** Recharts
 - **Notifications:** Sonner
-- **Containerization:** Docker (Nginx + PHP-FPM + MySQL + Redis)
+- **Containerization:** Docker (PHP 8.4 + Nginx reverse proxy + MongoDB + Redis + MinIO + MailHog + n8n)
 
 ## Features
 
@@ -101,24 +101,100 @@ Visit `http://localhost:8000` and log in with:
 
 ## Quick Start (Docker)
 
+The Docker dev stack provides a full local environment with SSL via mkcert, a reverse proxy, MongoDB, Redis, MinIO (S3-compatible storage), MailHog, and n8n.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [mkcert](https://github.com/FiloSottile/mkcert) (for local SSL certificates)
+  ```bash
+  brew install mkcert
+  mkcert -install   # installs the local CA into system trust store
+  ```
+
+### Setup
+
 ```bash
 # 1. Copy environment file
 cp .env.example .env
 
-# 2. Build and start containers
-docker compose up -d --build
+# 2. Generate local SSL certificates for *.nova-starter.localhost
+mkcert -cert-file "docker/certs/_wildcard.nova-starter.localhost.pem" \
+       -key-file "docker/certs/_wildcard.nova-starter.localhost-key.pem" \
+       "*.nova-starter.localhost" "nova-starter.localhost"
 
-# 3. (Optional) Seed the database on first run
-# Set RUN_SEEDERS=true in .env before building, or run:
-docker compose exec app php artisan db:seed
+# 3. Start the stack (builds the app image on first run)
+./dev.sh up
 ```
 
-Visit `http://localhost:8080`.
+This starts all services, installs PHP/JS dependencies, runs migrations, and initializes the MinIO `uploads` bucket.
 
-The Docker stack includes:
-- **app** — PHP 8.4 FPM + Nginx + Supervisor (Alpine)
-- **db** — MySQL 8.4
-- **redis** — Redis 7 Alpine
+### Access Points
+
+| Service | URL | Credentials |
+|---|---|---|
+| App | https://app.nova-starter.localhost | — |
+| MinIO API | https://storage.nova-starter.localhost | minioadmin / minioadmin |
+| MinIO Console | https://storage-console.nova-starter.localhost | minioadmin / minioadmin |
+| MailHog | http://localhost:8025 | — |
+| n8n | http://localhost:5678 | admin / password |
+| MongoDB | localhost:27017 | dbuser / password |
+| Redis | localhost:6379 | — |
+| Vite HMR | localhost:5173 | — |
+| Xdebug | localhost:9003 | — |
+
+### Docker Services
+
+| Service | Image | Purpose |
+|---|---|---|
+| `app` | Custom (Ubuntu 22.04 + PHP 8.4) | Laravel app via `artisan serve`, Xdebug, Vite HMR port |
+| `nginx` | `nginx:alpine` | SSL reverse proxy with wildcard cert for `*.nova-starter.localhost` |
+| `mongodb` | `mongo:latest` | Primary database with auth + persistent volumes |
+| `redis` | `redis:alpine` | Cache/queue with healthcheck |
+| `mailhog` | `mailhog/mailhog` | Local mail catcher (SMTP 1025, UI 8025) |
+| `minio` | `minio/minio` | S3-compatible object storage (API 9000, console 9001) |
+| `n8n` | `n8nio/n8n` | Workflow automation (sqlite-backed) |
+
+### dev.sh Commands
+
+| Command | Description |
+|---|---|
+| `./dev.sh up` | Start containers, install deps, run migrations, init MinIO |
+| `./dev.sh up --no-update` | Start containers without running migrations |
+| `./dev.sh up --rebuild` | Rebuild app image from scratch and start |
+| `./dev.sh down` | Stop and remove containers |
+| `./dev.sh stop` | Stop containers (keep them for quick restart) |
+| `./dev.sh destroy` | Remove all containers, volumes, networks, and images |
+| `./dev.sh rebuild <service>` | Rebuild and restart a specific service |
+| `./dev.sh init` | Full bootstrap: containers, deps, decrypt env, migrate, build, MinIO |
+| `./dev.sh art <command>` | Run artisan commands in the container |
+| `./dev.sh comp <command>` | Run composer commands in the container |
+| `./dev.sh npm <command>` | Run npm commands in the container |
+| `./dev.sh sh` | Open a shell in the app container |
+| `./dev.sh pint` | Run Laravel Pint formatter |
+| `./dev.sh phpunit` | Run PHPUnit tests |
+| `./dev.sh encrypt-env` | Encrypt `.env` using key from `.devconfig` |
+| `./dev.sh decrypt-env` | Decrypt `.env.encrypted` using key from `.devconfig` |
+
+### Environment Encryption
+
+The `dev.sh` script supports encrypting/decrypting your `.env` file for safe sharing:
+
+```bash
+# 1. Set your encryption key
+cp .devconfig.example .devconfig
+# Edit .devconfig and set LOCAL_ENCRYPTION_KEY=your-secret-key
+
+# 2. Encrypt
+./dev.sh encrypt-env    # creates .env.encrypted
+
+# 3. Decrypt (on another machine or after cloning)
+./dev.sh decrypt-env    # restores .env from .env.encrypted
+```
+
+### Production Docker
+
+A production-oriented Docker setup (PHP-FPM + Nginx + Supervisor in a single Alpine image) is preserved in `docker/production/`. This is suitable for deployment to a single server or as a base for CI/CD builds.
 
 ## Configuration
 
@@ -306,10 +382,20 @@ nova-starter/
 │       ├── AdminUserSeeder.php                # Default admin user
 │       └── SettingsSeeder.php                 # Default branding + module settings
 ├── docker/
-│   ├── Dockerfile                             # PHP 8.4 FPM Alpine + Nginx + Supervisor
-│   ├── nginx.conf
-│   ├── supervisor.conf
-│   └── entrypoint.sh                          # Auto-migrate, seed, cache config
+│   ├── 8.4/                                   # Dev app image (Ubuntu 22.04 + PHP 8.4)
+│   │   ├── Dockerfile                         # PHP 8.4 + extensions, Node 20, MongoDB ext
+│   │   ├── php.ini                            # 100M uploads, 512M memory, opcache, Xdebug
+│   │   ├── supervisord.conf                   # Runs `artisan serve` on port 80
+│   │   └── start-container                    # Entry point with gosu + user remapping
+│   ├── certs/                                 # mkcert wildcard SSL certs for *.nova-starter.localhost
+│   ├── nginx/conf.d/
+│   │   ├── app.conf                           # app.nova-starter.localhost → app:80 (SSL + WebSocket)
+│   │   └── minio.conf                         # storage. + storage-console. → minio:9000/9001
+│   └── production/                            # Production image (PHP-FPM + Nginx + Supervisor, Alpine)
+│       ├── Dockerfile
+│       ├── nginx.conf
+│       ├── supervisor.conf
+│       └── entrypoint.sh                      # Auto-migrate, seed, cache config
 ├── resources/js/
 │   ├── Components/
 │   │   ├── ui/                                # 19 shadcn/ui components
@@ -351,7 +437,9 @@ nova-starter/
 │   ├── web.php                                # Web routes (controllers under App\Core)
 │   ├── auth.php                               # Auth routes (Breeze)
 │   └── console.php                            # Console commands
-├── docker-compose.yml
+├── docker-compose.yml                         # Dev stack: app, nginx, mongodb, redis, mailhog, minio, n8n
+├── dev.sh                                     # Dev helper script (up, init, art, comp, npm, etc.)
+├── .devconfig.example                         # Template for env encryption key
 └── .env.example
 ```
 
@@ -470,6 +558,8 @@ Available in `app/Support/Database/Traits/`:
 
 ## Development Commands
 
+### Local (without Docker)
+
 | Command | Description |
 |---|---|
 | `composer setup` | One-command setup: install deps, generate key, migrate, build assets |
@@ -477,6 +567,22 @@ Available in `app/Support/Database/Traits/`:
 | `composer test` | Clear config and run PHPUnit tests |
 | `npm run dev` | Start Vite dev server |
 | `npm run build` | Build frontend assets (incl. SSR build) |
+
+### Docker (via dev.sh)
+
+| Command | Description |
+|---|---|
+| `./dev.sh up` | Start stack, install deps, migrate, init MinIO |
+| `./dev.sh up --rebuild` | Rebuild app image and start |
+| `./dev.sh down` | Stop and remove containers |
+| `./dev.sh stop` | Stop containers (quick restart later) |
+| `./dev.sh destroy` | Remove all containers, volumes, and images |
+| `./dev.sh art migrate` | Run migrations in container |
+| `./dev.sh comp install` | Install composer deps in container |
+| `./dev.sh npm install` | Install npm deps in container |
+| `./dev.sh sh` | Shell into the app container |
+| `./dev.sh phpunit` | Run tests in container |
+| `./dev.sh pint` | Format PHP in container |
 
 ## License
 
