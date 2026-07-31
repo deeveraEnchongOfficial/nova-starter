@@ -57,7 +57,7 @@ class RoleController extends Controller
         $this->upsertRole->execute(
             new Role,
             $validated['name'],
-            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions']) : [],
+            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions'])->all() : [],
         );
 
         return redirect()->route('roles.index')
@@ -86,7 +86,7 @@ class RoleController extends Controller
         $this->upsertRole->execute(
             $role,
             $validated['name'],
-            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions']) : [],
+            permissions: ! empty($validated['permissions']) ? $this->permissionRepository->findManyByIds($validated['permissions'])->all() : [],
         );
 
         return redirect()->route('roles.index')

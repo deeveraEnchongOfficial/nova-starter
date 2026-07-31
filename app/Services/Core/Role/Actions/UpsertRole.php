@@ -27,6 +27,14 @@ class UpsertRole
 
         if (! empty($permissions)) {
             $role->syncPermissions($permissions);
+
+            // Spatie's syncPermissions uses a pivot table, but with MongoDB the
+            // relationship is stored as an embedded permission_id array on the
+            // role document. Update it directly so permission checks work.
+            $permissionIds = collect($permissions)->map(fn ($p) => $p instanceof Model ? $p->getKey() : $p)->all();
+            $role->forceFill(['permission_id' => $permissionIds])->save();
+        } else {
+            $role->forceFill(['permission_id' => []])->save();
         }
 
         // Set the created_by if this is a new user

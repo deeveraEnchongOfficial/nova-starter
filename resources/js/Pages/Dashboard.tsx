@@ -5,8 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
 import { Head, usePage } from '@inertiajs/react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { Download, DollarSign, Users, TrendingUp, Activity } from 'lucide-react';
+import { Download, DollarSign, Users, TrendingUp, Activity, HardDrive, FileText, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/types';
+import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 
 const chartData = [
     { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
@@ -153,6 +155,8 @@ export default function Dashboard() {
                                 </CardContent>
                             </Card>
                         </div>
+
+                        <StorageWidget />
                     </TabsContent>
 
                     <TabsContent value="analytics" className="space-y-4">
@@ -231,5 +235,121 @@ function RecentActivity({ name, email }: { name: string; email: string }) {
                 </div>
             </div>
         </div>
+    );
+}
+
+interface StorageData {
+    used: number;
+    capacity: number | null;
+    file_count: number;
+    trashed_count: number;
+    available: number | null;
+}
+
+function formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function StorageWidget() {
+    const [data, setData] = useState<StorageData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchStorage = useCallback(async () => {
+        try {
+            const response = await axios.get('/api/v1/storage/usage');
+            setData(response.data);
+        } catch {
+            // silently fail — widget is non-critical
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchStorage();
+    }, [fetchStorage]);
+
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Storage</CardTitle>
+                    <CardDescription>Loading storage usage...</CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
+
+    if (!data) {
+        return null;
+    }
+
+    const usedPercent = data.capacity ? Math.min(100, (data.used / data.capacity) * 100) : null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <HardDrive className="h-5 w-5 text-muted-foreground" />
+                    Storage
+                </CardTitle>
+                <CardDescription>Your file storage usage</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {/* Usage bar */}
+                {data.capacity !== null && usedPercent !== null ? (
+                    <div className="space-y-2">
+                        <div className="flex items-baseline justify-between">
+                            <span className="text-2xl font-bold">{formatBytes(data.used)}</span>
+                            <span className="text-sm text-muted-foreground">
+                                of {formatBytes(data.capacity)}
+                            </span>
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                                className={`h-full rounded-full transition-all ${
+                                    usedPercent > 90
+                                        ? 'bg-destructive'
+                                        : usedPercent > 70
+                                          ? 'bg-amber-500'
+                                          : 'bg-primary'
+                                }`}
+                                style={{ width: `${usedPercent}%` }}
+                            />
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{usedPercent.toFixed(1)}% used</span>
+                            <span>{formatBytes(data.available ?? 0)} free</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        <span className="text-2xl font-bold">{formatBytes(data.used)}</span>
+                        <p className="text-xs text-muted-foreground">Total used</p>
+                    </div>
+                )}
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="flex items-center gap-3 rounded-lg border p-3">
+                        <FileText className="h-8 w-8 text-blue-500" />
+                        <div>
+                            <p className="text-lg font-bold">{data.file_count}</p>
+                            <p className="text-xs text-muted-foreground">Files</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-lg border p-3">
+                        <Trash2 className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                            <p className="text-lg font-bold">{data.trashed_count}</p>
+                            <p className="text-xs text-muted-foreground">In Trash</p>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

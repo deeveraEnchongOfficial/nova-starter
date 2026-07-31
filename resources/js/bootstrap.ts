@@ -3,13 +3,13 @@ import type { AxiosRequestConfig } from 'axios';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-const csrfToken = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
-
-if (csrfToken) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
-} else {
-    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
-}
+// Use the XSRF-TOKEN cookie for CSRF protection instead of a static meta tag.
+// The cookie is updated by Laravel on every response (including after session
+// regeneration), so it's always current. The meta tag approach goes stale after
+// login because Inertia doesn't do a full page reload.
+axios.defaults.withCredentials = true;
+axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 
 declare global {
     interface Window {

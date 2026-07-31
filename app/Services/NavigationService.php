@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 class NavigationService
 {
@@ -22,9 +23,17 @@ class NavigationService
         $result = [];
 
         foreach ($items as $item) {
+            // Check module availability
             if (isset($item['route']) && $item['route'] !== null) {
                 $moduleKey = $this->findModuleForRoute($item['route']);
                 if ($moduleKey && ! $this->moduleService->isEnabled($moduleKey)) {
+                    continue;
+                }
+            }
+
+            // Check permission
+            if (isset($item['permission']) && $item['permission'] !== null) {
+                if (! Gate::allows($item['permission'])) {
                     continue;
                 }
             }

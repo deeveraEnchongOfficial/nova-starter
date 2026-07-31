@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Services\Core\File\Actions;
+
+use App\Services\Core\File\Share;
+use App\Services\Core\File\SharePermission;
+use Illuminate\Database\Eloquent\Model;
+
+class ShareResource
+{
+    /**
+     * Share a resource (File or Folder) with a user.
+     *
+     * @param  Model  $resource  The resource to share (File or Folder)
+     * @param  Model  $sharedWith  The user to share with
+     * @param  SharePermission  $permission  The permission level
+     * @param  Model  $sharedBy  The user sharing the resource
+     */
+    public function execute(
+        Model $resource,
+        Model $sharedWith,
+        SharePermission $permission,
+        Model $sharedBy,
+    ): Share {
+        // Check if share already exists, update if so
+        $share = Share::forResource($resource)
+            ->forUser($sharedWith)
+            ->first();
+
+        if ($share) {
+            $share->forceFill(['permission_value' => $permission->value]);
+            $share->save();
+
+            return $share;
+        }
+
+        $share = Share::forceMake([
+            'permission_value' => $permission->value,
+        ]);
+
+        $share->shareable()->associate($resource);
+        $share->sharedWith()->associate($sharedWith);
+        $share->createdBy()->associate($sharedBy);
+        $share->save();
+
+        return $share;
+    }
+}

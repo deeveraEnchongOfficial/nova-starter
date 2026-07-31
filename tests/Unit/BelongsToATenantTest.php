@@ -20,7 +20,8 @@ class BelongsToATenantTest extends TestCase
         $this->expectException(\LogicException::class);
 
         User::create([
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'password' => 'password',
         ]);
@@ -35,7 +36,8 @@ class BelongsToATenantTest extends TestCase
         ]);
 
         $user = User::create([
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'password' => 'password',
             'tenant_type' => 'core.organization',
@@ -56,7 +58,8 @@ class BelongsToATenantTest extends TestCase
         ]);
 
         $user = User::create([
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'password' => 'password',
             'tenant_type' => 'core.organization',
@@ -83,7 +86,8 @@ class BelongsToATenantTest extends TestCase
         ]);
 
         User::create([
-            'name' => 'User One',
+            'first_name' => 'User',
+            'last_name' => 'One',
             'email' => 'user1@example.com',
             'password' => 'password',
             'tenant_type' => 'core.organization',
@@ -91,7 +95,8 @@ class BelongsToATenantTest extends TestCase
         ]);
 
         User::create([
-            'name' => 'User Two',
+            'first_name' => 'User',
+            'last_name' => 'Two',
             'email' => 'user2@example.com',
             'password' => 'password',
             'tenant_type' => 'core.organization',
@@ -113,7 +118,8 @@ class BelongsToATenantTest extends TestCase
         config(['features.multi_tenant' => false]);
 
         $user = User::create([
-            'name' => 'No Tenant User',
+            'first_name' => 'No',
+            'last_name' => 'Tenant User',
             'email' => 'notenant@example.com',
             'password' => 'password',
         ]);
@@ -141,7 +147,8 @@ class BelongsToATenantTest extends TestCase
         ]);
 
         $user = User::create([
-            'name' => 'Member User',
+            'first_name' => 'Member',
+            'last_name' => 'User',
             'email' => 'member@example.com',
             'password' => 'password',
             'tenant_type' => 'core.organization',

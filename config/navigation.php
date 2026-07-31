@@ -9,6 +9,13 @@ return [
         'children' => null,
     ],
     [
+        'label' => 'Files',
+        'route' => 'files.index',
+        'icon' => 'FolderOpen',
+        'permission' => 'files.view',
+        'children' => null,
+    ],
+    [
         'label' => 'Administration',
         'route' => null,
         'icon' => 'Settings2',

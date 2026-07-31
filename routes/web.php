@@ -4,6 +4,7 @@ use App\Http\Controllers\App\Core\User\ProfileController;
 use App\Http\Controllers\App\Core\Role\RoleController;
 use App\Http\Controllers\App\Core\Setting\SettingController;
 use App\Http\Controllers\App\Core\User\UserController;
+use App\Http\Controllers\App\Core\File\FileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,6 +51,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/settings/modules', [SettingController::class, 'updateModules'])
         ->name('settings.modules.update')
         ->middleware('permission:settings.edit');
+
+    // File Manager
+    Route::get('/files', [FileController::class, 'index'])->name('files.index')->middleware('permission:files.view');
+    Route::get('/files/trash', [FileController::class, 'trash'])->name('files.trash')->middleware('permission:files.view');
+    Route::get('/files/starred', [FileController::class, 'starred'])->name('files.starred')->middleware('permission:files.view');
+    Route::get('/files/shared', [FileController::class, 'shared'])->name('files.shared')->middleware('permission:files.view');
 });
 
 require __DIR__.'/auth.php';
