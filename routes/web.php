@@ -4,7 +4,9 @@ use App\Http\Controllers\App\Core\User\ProfileController;
 use App\Http\Controllers\App\Core\Role\RoleController;
 use App\Http\Controllers\App\Core\Setting\SettingController;
 use App\Http\Controllers\App\Core\User\UserController;
+use App\Http\Controllers\App\Core\Activity\ActivityController;
 use App\Http\Controllers\App\Core\File\FileController;
+use App\Services\Core\Activity\ActivityRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -18,8 +20,20 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+Route::get('/dashboard', function (ActivityRepository $repository) {
+    return Inertia::render('Dashboard', [
+        'recentActivities' => $repository->findRecent(5)->load(['createdBy'])->map(fn ($activity) => [
+            'id' => $activity->id,
+            'type' => $activity->type,
+            'description' => $activity->description,
+            'created_at' => $activity->created_at->toIso8601String(),
+            'created_by' => $activity->createdBy ? [
+                'id' => $activity->createdBy->id,
+                'name' => $activity->createdBy->name,
+                'email' => $activity->createdBy->email,
+            ] : null,
+        ]),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -57,6 +71,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/files/trash', [FileController::class, 'trash'])->name('files.trash')->middleware('permission:files.view');
     Route::get('/files/starred', [FileController::class, 'starred'])->name('files.starred')->middleware('permission:files.view');
     Route::get('/files/shared', [FileController::class, 'shared'])->name('files.shared')->middleware('permission:files.view');
+
+    // Activity Logs
+    Route::get('activity-logs', [ActivityController::class, 'index'])->name('activity-logs.index')->middleware('permission:activity-logs.view');
+    Route::delete('activity-logs', [ActivityController::class, 'clear'])->name('activity-logs.clear')->middleware('permission:activity-logs.view');
+    Route::get('activity-logs/{activity}', [ActivityController::class, 'show'])->name('activity-logs.show')->middleware('permission:activity-logs.view');
 });
 
 require __DIR__.'/auth.php';

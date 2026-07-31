@@ -31,6 +31,7 @@ class ProfileTest extends TestCase
             ->actingAs($user)
             ->patch('/profile', [
                 'first_name' => 'Test',
+                'middle_name' => null,
                 'last_name' => 'User',
                 'email' => $newEmail,
             ]);

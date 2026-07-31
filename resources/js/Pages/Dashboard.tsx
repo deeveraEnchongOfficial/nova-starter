@@ -5,10 +5,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
 import { Head, usePage } from '@inertiajs/react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { Download, DollarSign, Users, TrendingUp, Activity, HardDrive, FileText, Trash2 } from 'lucide-react';
+import { Download, DollarSign, Users, TrendingUp, Activity, HardDrive, FileText, Trash2, ScrollText } from 'lucide-react';
+import { Badge } from '@/Components/ui/badge';
+import { Link } from '@inertiajs/react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
+
+interface RecentActivityItem {
+    id: string;
+    type: string;
+    description: string;
+    created_at: string;
+    created_by: { id: string; name: string; email: string } | null;
+}
+
+const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    create: 'default',
+    update: 'secondary',
+    delete: 'destructive',
+    login: 'outline',
+    logout: 'outline',
+    register: 'default',
+    export: 'secondary',
+    download: 'outline',
+    share: 'secondary',
+    restore: 'default',
+    upload: 'default',
+};
 
 const chartData = [
     { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
@@ -26,7 +50,7 @@ const chartData = [
 ];
 
 export default function Dashboard() {
-    const { auth, branding } = usePage<PageProps>().props;
+    const { auth, branding, recentActivities } = usePage<PageProps<{ recentActivities: RecentActivityItem[] }>>().props;
 
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold">Dashboard</h1>}>
@@ -145,13 +169,23 @@ export default function Dashboard() {
                             </Card>
                             <Card className="col-span-1 lg:col-span-3">
                                 <CardHeader>
-                                    <CardTitle>Recent Activity</CardTitle>
+                                    <CardTitle className="flex items-center justify-between">
+                                        <span>Recent Activity</span>
+                                        {recentActivities?.length > 0 && (
+                                            <Link
+                                                href={route('activity-logs.index')}
+                                                className="text-sm font-normal text-muted-foreground hover:text-foreground"
+                                            >
+                                                View all
+                                            </Link>
+                                        )}
+                                    </CardTitle>
                                     <CardDescription>
-                                        Your account activity this month.
+                                        Latest actions across the application.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <RecentActivity name={auth.user?.name || ''} email={auth.user?.email || ''} />
+                                    <RecentActivity activities={recentActivities || []} />
                                 </CardContent>
                             </Card>
                         </div>
@@ -200,40 +234,52 @@ export default function Dashboard() {
     );
 }
 
-function RecentActivity({ name, email }: { name: string; email: string }) {
-    const initials = name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+function RecentActivity({ activities }: { activities: RecentActivityItem[] }) {
+    if (activities.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+                <ScrollText className="h-8 w-8 text-muted-foreground/50" />
+                <p className="mt-2 text-sm text-muted-foreground">No recent activity</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center gap-4">
-                <Avatar className="h-9 w-9">
-                    <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 flex-wrap items-center justify-between">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">{name}</p>
-                        <p className="text-sm text-muted-foreground">{email}</p>
-                    </div>
-                    <div className="font-medium">Active</div>
-                </div>
-            </div>
-            <div className="flex items-center gap-4">
-                <Avatar className="flex h-9 w-9 items-center justify-center border">
-                    <AvatarFallback>N</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 flex-wrap items-center justify-between">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">Nova Starter</p>
-                        <p className="text-sm text-muted-foreground">System initialized</p>
-                    </div>
-                    <div className="font-medium">Ready</div>
-                </div>
-            </div>
+        <div className="space-y-1">
+            {activities.map((activity) => {
+                const initials = (activity.created_by?.name || 'System')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2);
+
+                return (
+                    <Link
+                        key={activity.id}
+                        href={route('activity-logs.show', activity.id)}
+                        className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/50"
+                    >
+                        <Avatar className="mt-0.5 h-8 w-8">
+                            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                                <Badge variant={typeBadgeVariant[activity.type] ?? 'outline'} className="text-xs">
+                                    {activity.type}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                    {new Date(activity.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </span>
+                            </div>
+                            <p className="text-sm leading-tight">{activity.description}</p>
+                            {activity.created_by && (
+                                <p className="text-xs text-muted-foreground">by {activity.created_by.name}</p>
+                            )}
+                        </div>
+                    </Link>
+                );
+            })}
         </div>
     );
 }

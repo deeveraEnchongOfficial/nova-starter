@@ -22,7 +22,7 @@ class RegistrationTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'role' => 'User',
-            'email' => 'test@example.com',
+            'email' => fake()->unique()->safeEmail(),
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);

@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
             'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
             'settings.view', 'settings.edit',
             'files.view', 'files.create', 'files.edit', 'files.delete',
+            'activity-logs.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -47,6 +48,7 @@ class RolePermissionSeeder extends Seeder
             'roles.view',
             'settings.view',
             'files.view', 'files.create', 'files.edit', 'files.delete',
+            'activity-logs.view',
         ]);
 
         $createRole('User');

@@ -4,6 +4,7 @@ namespace Tests\Feature\FileUpload;
 
 use App\Services\Core\File\File;
 use App\Services\Core\File\Folder;
+use App\Services\Core\Role\Permission;
 use App\Services\Core\User\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +21,12 @@ class FileApiControllerTest extends TestCase
         parent::setUp();
         Storage::fake('s3');
         $this->user = User::factory()->create();
+
+        $permissions = ['files.view', 'files.create', 'files.edit', 'files.delete'];
+        foreach ($permissions as $name) {
+            Permission::firstOrCreate(['name' => $name], ['guard_name' => 'web']);
+        }
+        $this->user->givePermissionTo($permissions);
     }
 
     private function createFile(User $user, string $name = 'test.txt', ?string $folderId = null): File

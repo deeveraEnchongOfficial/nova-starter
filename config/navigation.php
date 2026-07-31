@@ -33,6 +33,12 @@ return [
                 'icon' => 'ShieldCheck',
                 'permission' => 'roles.view',
             ],
+            [
+                'label' => 'Activity Logs',
+                'route' => 'activity-logs.index',
+                'icon' => 'ScrollText',
+                'permission' => 'activity-logs.view',
+            ],
         ],
     ],
     [

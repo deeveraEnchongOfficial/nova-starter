@@ -24,4 +24,12 @@ return [
         'route' => 'settings.index',
         'permission' => 'settings.view',
     ],
+
+    'activity-logs' => [
+        'enabled' => env('MODULE_ACTIVITY_LOGS_ENABLED', true),
+        'label' => 'Activity Logs',
+        'icon' => 'ScrollText',
+        'route' => 'activity-logs.index',
+        'permission' => 'activity-logs.view',
+    ],
 ];

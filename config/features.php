@@ -10,4 +10,5 @@ return [
     'account_deletion' => env('FEATURE_ACCOUNT_DELETION', true),
     'api_tokens' => env('FEATURE_API_TOKENS', false),
     'dark_mode' => env('FEATURE_DARK_MODE', true),
+    'activity_logs' => env('FEATURE_ACTIVITY_LOGS', true),
 ];

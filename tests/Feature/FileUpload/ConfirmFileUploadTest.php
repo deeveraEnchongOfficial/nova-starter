@@ -5,6 +5,7 @@ namespace Tests\Feature\FileUpload;
 use App\Services\Core\File\Actions\ConfirmFileUpload;
 use App\Services\Core\File\File;
 use App\Services\Core\File\FileRepository;
+use App\Services\Core\Role\Permission;
 use App\Services\Core\User\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,12 @@ class ConfirmFileUploadTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
+
+        $permissions = ['files.view', 'files.create', 'files.edit', 'files.delete'];
+        foreach ($permissions as $name) {
+            Permission::firstOrCreate(['name' => $name], ['guard_name' => 'web']);
+        }
+        $this->user->givePermissionTo($permissions);
     }
 
     public function test_unauthenticated_request_returns_401(): void

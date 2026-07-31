@@ -12,6 +12,8 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/Components/ui/dialog';
@@ -88,6 +90,7 @@ export default function FilesIndex({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [detailsFile, setDetailsFile] = useState<FileItem | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
 
     const handleSearch = useCallback(async (value: string) => {
         setSearchQuery(value);
@@ -191,17 +194,23 @@ export default function FilesIndex({
         if (fileInputRef.current) fileInputRef.current.value = '';
     }, [currentFolderId]);
 
-    const handleDeleteFile = useCallback(async (id: string) => {
-        if (!confirm('Move this file to trash?')) return;
-        await axios.delete(`/api/v1/files/${id}`);
-        router.reload({ only: ['folders', 'files'] });
+    const handleDeleteFile = useCallback((id: string, name: string) => {
+        setDeleteTarget({ type: 'file', id, name });
     }, []);
 
-    const handleDeleteFolder = useCallback(async (id: string) => {
-        if (!confirm('Move this folder and all its contents to trash?')) return;
-        await axios.delete(`/api/v1/folders/${id}`);
-        router.reload({ only: ['folders', 'files'] });
+    const handleDeleteFolder = useCallback((id: string, name: string) => {
+        setDeleteTarget({ type: 'folder', id, name });
     }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (!deleteTarget) return;
+        const endpoint = deleteTarget.type === 'file'
+            ? `/api/v1/files/${deleteTarget.id}`
+            : `/api/v1/folders/${deleteTarget.id}`;
+        await axios.delete(endpoint);
+        setDeleteTarget(null);
+        router.reload({ only: ['folders', 'files'] });
+    }, [deleteTarget]);
 
     const handleToggleStar = useCallback(async (type: 'file' | 'folder', id: string) => {
         const endpoint = type === 'file' ? `/api/v1/files/${id}/star` : `/api/v1/folders/${id}/star`;
@@ -449,7 +458,7 @@ export default function FilesIndex({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleDeleteFolder(folder.id);
+                                                handleDeleteFolder(folder.id, folder.name);
                                             }}
                                             className="p-1 rounded hover:bg-accent-foreground/10"
                                         >
@@ -509,7 +518,7 @@ export default function FilesIndex({
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
-                                                    onClick={() => handleDeleteFile(file.id)}
+                                                    onClick={() => handleDeleteFile(file.id, file.name)}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
                                                     <Trash2 className="mr-2 w-4 h-4" />
@@ -545,7 +554,7 @@ export default function FilesIndex({
                                         <td className="p-2 text-sm text-muted-foreground">—</td>
                                         <td className="p-2 text-sm text-muted-foreground">{folder.created_at}</td>
                                         <td className="p-2">
-                                            <button onClick={() => handleDeleteFolder(folder.id)} className="p-1 rounded hover:bg-accent-foreground/10">
+                                            <button onClick={() => handleDeleteFolder(folder.id, folder.name)} className="p-1 rounded hover:bg-accent-foreground/10">
                                                 <Trash2 className="w-4 h-4 text-red-500" />
                                             </button>
                                         </td>
@@ -592,7 +601,7 @@ export default function FilesIndex({
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem
-                                                        onClick={() => handleDeleteFile(file.id)}
+                                                        onClick={() => handleDeleteFile(file.id, file.name)}
                                                         className="text-red-600 focus:text-red-600"
                                                     >
                                                         <Trash2 className="mr-2 w-4 h-4" />
@@ -721,6 +730,26 @@ export default function FilesIndex({
                             </div>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Move to trash</DialogTitle>
+                        <DialogDescription>
+                            {deleteTarget?.type === 'folder'
+                                ? `Move "${deleteTarget?.name}" and all its contents to trash? You can restore it later from the trash.`
+                                : `Move "${deleteTarget?.name}" to trash? You can restore it later from the trash.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>
+                            <Trash2 className="mr-2 w-4 h-4" />
+                            Move to trash
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </AuthenticatedLayout>

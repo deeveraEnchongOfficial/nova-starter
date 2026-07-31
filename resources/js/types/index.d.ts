@@ -57,6 +57,7 @@ export interface Features {
     account_deletion: boolean;
     api_tokens: boolean;
     dark_mode: boolean;
+    activity_logs: boolean;
     [key: string]: boolean;
 }
 
