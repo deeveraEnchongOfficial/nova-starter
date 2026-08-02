@@ -5,12 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
 import { Head, usePage } from '@inertiajs/react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { Download, DollarSign, Users, TrendingUp, Activity, HardDrive, FileText, Trash2, ScrollText } from 'lucide-react';
+import { Download, DollarSign, Users, TrendingUp, Activity, HardDrive, FileText, Trash2, ScrollText, Palette } from 'lucide-react';
 import { Badge } from '@/Components/ui/badge';
 import { Link } from '@inertiajs/react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
+import { useTheme } from '@/Components/theme-provider';
 
 interface RecentActivityItem {
     id: string;
@@ -48,6 +49,30 @@ const chartData = [
     { name: 'Nov', total: Math.floor(Math.random() * 5000) + 1000 },
     { name: 'Dec', total: Math.floor(Math.random() * 5000) + 1000 },
 ];
+
+function ThemeWidget({ defaultMode }: { defaultMode: string }) {
+    const [mounted, setMounted] = useState(false);
+    const { theme, resolvedTheme } = useTheme();
+
+    useEffect(() => setMounted(true), []);
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Theme</CardTitle>
+                <Palette className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold capitalize">
+                    {mounted ? (theme === 'system' ? 'System' : resolvedTheme) : defaultMode}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    {mounted && theme === 'system' ? `Resolved: ${resolvedTheme}` : 'Current appearance'}
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function Dashboard() {
     const { auth, branding, recentActivities } = usePage<PageProps<{ recentActivities: RecentActivityItem[] }>>().props;
@@ -108,20 +133,7 @@ export default function Dashboard() {
                                     </p>
                                 </CardContent>
                             </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Theme</CardTitle>
-                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold capitalize">
-                                        {branding.theme.default_mode}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Current appearance
-                                    </p>
-                                </CardContent>
-                            </Card>
+                            <ThemeWidget defaultMode={branding.theme.default_mode} />
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">App Name</CardTitle>

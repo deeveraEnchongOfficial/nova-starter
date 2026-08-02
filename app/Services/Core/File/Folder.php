@@ -16,6 +16,8 @@ class Folder extends Model
 {
     use HasCreatedBy, HasMetadata, ServiceModel, SoftDeletes;
 
+    protected $appends = ['is_starred', 'color'];
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -101,6 +103,16 @@ class Folder extends Model
     {
         return Attribute::make(
             get: fn () => (bool) ($this->__metadata['is_starred'] ?? false)
+        );
+    }
+
+    /**
+     * Get the folder color.
+     */
+    public function color(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->__metadata['color'] ?? null
         );
     }
 

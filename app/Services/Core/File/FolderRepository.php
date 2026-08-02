@@ -42,10 +42,15 @@ class FolderRepository
     /**
      * Search folders by name for a specific owner.
      */
-    public function search(string $term, Model $owner, int $limit = 20)
+    public function search(string $term, Model $owner, ?string $folderId = null, int $limit = 20)
     {
         return Folder::ownedBy($owner)
-            
+            ->when($folderId, function (Builder $query, string $folderId): void {
+                $query->where('parent_id', $folderId);
+            })
+            ->when(!$folderId, function (Builder $query): void {
+                $query->whereNull('parent_id');
+            })
             ->where('name', 'regex', '/'.preg_quote($term, '/').'/i')
             ->limit($limit)
             ->get();
@@ -57,7 +62,7 @@ class FolderRepository
     public function getStarred(Model $owner)
     {
         return Folder::ownedBy($owner)
-            
+
             ->where('__metadata.is_starred', true)
             ->latest()
             ->get();
@@ -85,7 +90,7 @@ class FolderRepository
         while (! empty($queue)) {
             $batch = array_splice($queue, 0);
             $childIds = Folder::whereIn('parent_id', $batch)
-                
+
                 ->pluck('_id')
                 ->toArray();
 

@@ -51,10 +51,15 @@ class FileRepository
     /**
      * Search files by name for a specific owner.
      */
-    public function search(string $term, Model $owner, int $limit = 20)
+    public function search(string $term, Model $owner, ?string $folderId = null, int $limit = 20)
     {
         return File::ownedBy($owner)
-            
+            ->when($folderId, function (Builder $query, string $folderId): void {
+                $query->where('folder_id', $folderId);
+            })
+            ->when(!$folderId, function (Builder $query): void {
+                $query->whereNull('folder_id');
+            })
             ->where('name', 'regex', '/'.preg_quote($term, '/').'/i')
             ->limit($limit)
             ->get();
@@ -66,7 +71,7 @@ class FileRepository
     public function getStarred(Model $owner)
     {
         return File::ownedBy($owner)
-            
+
             ->where('__metadata.is_starred', true)
             ->latest()
             ->get();
@@ -94,7 +99,7 @@ class FileRepository
             ->toArray();
 
         return File::whereIn('_id', $sharedFileIds)
-            
+
             ->latest()
             ->get();
     }
@@ -113,7 +118,7 @@ class FileRepository
         $query = File::query()
             ->with($with)
             ->latest()
-            
+
             ->where('__metadata.listable', true);
 
         if (! empty($search)) {

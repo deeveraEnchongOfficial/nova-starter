@@ -21,13 +21,15 @@ class SearchController extends Controller
     {
         $request->validate([
             'q' => ['required', 'string', 'min:1'],
+            'folder_id' => ['nullable', 'string'],
         ]);
 
         $user = $request->user();
         $term = $request->get('q');
+        $folderId = $request->get('folder_id');
 
-        $files = $this->fileRepository->search($term, $user);
-        $folders = $this->folderRepository->search($term, $user);
+        $files = $this->fileRepository->search($term, $user, folderId: $folderId);
+        $folders = $this->folderRepository->search($term, $user, folderId: $folderId);
 
         return response()->json([
             'files' => $files,

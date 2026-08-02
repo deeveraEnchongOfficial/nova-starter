@@ -85,6 +85,7 @@ class FolderController extends Controller
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
             'parent_id' => ['nullable', 'string'],
+            'color' => ['nullable', 'string', 'max:20'],
         ]);
 
         if (isset($data['name']) && $data['name'] !== $folder->name) {
@@ -96,7 +97,12 @@ class FolderController extends Controller
             app(MoveFolder::class)->execute($folder, $newParent);
         }
 
-        return response()->json(['id' => $folder->id, 'name' => $folder->name]);
+        if (array_key_exists('color', $data)) {
+            $folder->setMetadata('color', $data['color'] ?: null);
+            $folder->save();
+        }
+
+        return response()->json(['id' => $folder->id, 'name' => $folder->name, 'color' => $folder->color]);
     }
 
     /**

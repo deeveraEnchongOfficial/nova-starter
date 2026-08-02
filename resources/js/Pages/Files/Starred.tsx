@@ -83,7 +83,7 @@ export default function FilesStarred({
                                     onDoubleClick={() => router.visit(route('files.index', { folder_id: folder.id }))}
                                 >
                                     <FolderIcon className="h-12 w-12 text-yellow-500" />
-                                    <p className="mt-2 truncate text-sm font-medium">{folder.name}</p>
+                                    <p className="mt-2 w-full truncate text-center text-sm font-medium">{folder.name}</p>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -101,7 +101,7 @@ export default function FilesStarred({
                                     className="group relative flex cursor-pointer flex-col items-center rounded-lg border p-4 hover:bg-accent"
                                 >
                                     {getFileIcon(file.mime_type)}
-                                    <p className="mt-2 truncate text-sm font-medium">{file.name}</p>
+                                    <p className="mt-2 w-full truncate text-center text-sm font-medium">{file.name}</p>
                                     <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
                                     <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100">
                                         <button

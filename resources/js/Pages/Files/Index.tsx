@@ -38,6 +38,8 @@ import {
     Search,
     Eye,
     Info,
+    Palette,
+    Pencil,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PageProps } from '@/types';
@@ -48,6 +50,7 @@ interface FolderItem {
     name: string;
     parent_id: string | null;
     is_starred: boolean;
+    color: string | null;
     created_at: string;
 }
 
@@ -91,16 +94,20 @@ export default function FilesIndex({
     const [previewLoading, setPreviewLoading] = useState(false);
     const [detailsFile, setDetailsFile] = useState<FileItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
+    const [colorTarget, setColorTarget] = useState<FolderItem | null>(null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [renameTarget, setRenameTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
+    const [renameValue, setRenameValue] = useState('');
 
     const handleSearch = useCallback(async (value: string) => {
         setSearchQuery(value);
         if (value.trim().length > 0) {
-            const response = await axios.get('/api/v1/search', { params: { q: value } });
+            const response = await axios.get('/api/v1/search', { params: { q: value, folder_id: currentFolderId } });
             setSearchResults(response.data);
         } else {
             setSearchResults(null);
         }
-    }, []);
+    }, [currentFolderId]);
 
     const handleCreateFolder = useCallback(async () => {
         if (!newFolderName.trim()) return;
@@ -211,6 +218,47 @@ export default function FilesIndex({
         setDeleteTarget(null);
         router.reload({ only: ['folders', 'files'] });
     }, [deleteTarget]);
+
+    const handleRename = useCallback((type: 'file' | 'folder', id: string, name: string) => {
+        setRenameTarget({ type, id, name });
+        setRenameValue(name);
+    }, []);
+
+    const confirmRename = useCallback(async () => {
+        if (!renameTarget || !renameValue.trim()) return;
+        const endpoint = renameTarget.type === 'file'
+            ? `/api/v1/files/${renameTarget.id}`
+            : `/api/v1/folders/${renameTarget.id}`;
+        await axios.patch(endpoint, { name: renameValue.trim() });
+        setRenameTarget(null);
+        router.reload({ only: ['folders', 'files'] });
+    }, [renameTarget, renameValue]);
+
+    const handleColorChange = useCallback((folder: FolderItem) => {
+        setColorTarget(folder);
+        setSelectedColor(folder.color);
+    }, []);
+
+    const confirmColorChange = useCallback(async () => {
+        if (!colorTarget) return;
+        await axios.patch(`/api/v1/folders/${colorTarget.id}`, { color: selectedColor });
+        setColorTarget(null);
+        router.reload({ only: ['folders', 'files'] });
+    }, [colorTarget, selectedColor]);
+
+    const folderColorClass = (color: string | null) => {
+        const colorMap: Record<string, string> = {
+            blue: 'text-blue-500',
+            green: 'text-green-500',
+            red: 'text-red-500',
+            purple: 'text-purple-500',
+            orange: 'text-orange-500',
+            pink: 'text-pink-500',
+            yellow: 'text-yellow-500',
+            gray: 'text-gray-500',
+        };
+        return color ? (colorMap[color] || 'text-yellow-500') : 'text-yellow-500';
+    };
 
     const handleToggleStar = useCallback(async (type: 'file' | 'folder', id: string) => {
         const endpoint = type === 'file' ? `/api/v1/files/${id}/star` : `/api/v1/folders/${id}/star`;
@@ -443,9 +491,9 @@ export default function FilesIndex({
                                     className="flex relative flex-col items-center p-4 w-full rounded-lg border cursor-pointer group hover:bg-accent"
                                     onDoubleClick={() => router.visit(route('files.index', { folder_id: folder.id }))}
                                 >
-                                    <FolderIcon className="w-12 h-12 text-yellow-500 shrink-0" />
+                                    <FolderIcon className={`w-12 h-12 shrink-0 ${folderColorClass(folder.color)}`} />
                                     <p className="mt-2 w-full text-sm font-medium text-center truncate">{folder.name}</p>
-                                    <div className="absolute top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <div className="absolute top-1 right-1 flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -455,15 +503,38 @@ export default function FilesIndex({
                                         >
                                             <Star className={`h-4 w-4 ${folder.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                         </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteFolder(folder.id, folder.name);
-                                            }}
-                                            className="p-1 rounded hover:bg-accent-foreground/10"
-                                        >
-                                            <Trash2 className="w-4 h-4 text-red-500" />
-                                        </button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="p-1 rounded hover:bg-accent-foreground/10"
+                                                >
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem onClick={() => handleRename('folder', folder.id, folder.name)}>
+                                                    <Pencil className="mr-2 w-4 h-4" />
+                                                    Rename
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleColorChange(folder)}>
+                                                    <Palette className="mr-2 w-4 h-4" />
+                                                    Change Color
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleToggleStar('folder', folder.id)}>
+                                                    <Star className={`mr-2 h-4 w-4 ${folder.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                    {folder.is_starred ? 'Unstar' : 'Star'}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    onClick={() => handleDeleteFolder(folder.id, folder.name)}
+                                                    className="text-red-600 focus:text-red-600"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             ))}
@@ -498,6 +569,10 @@ export default function FilesIndex({
                                                 </button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem onClick={() => handleRename('file', file.id, file.name)}>
+                                                    <Pencil className="mr-2 w-4 h-4" />
+                                                    Rename
+                                                </DropdownMenuItem>
                                                 {isPreviewable(file.mime_type) && (
                                                     <DropdownMenuItem onClick={() => handlePreview(file)}>
                                                         <Eye className="mr-2 w-4 h-4" />
@@ -521,7 +596,7 @@ export default function FilesIndex({
                                                     onClick={() => handleDeleteFile(file.id, file.name)}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
-                                                    <Trash2 className="mr-2 w-4 h-4" />
+                                                    <Trash2 className="mr-2 h-4 w-4" />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -545,7 +620,7 @@ export default function FilesIndex({
                                     <tr key={folder.id} className="border-b hover:bg-accent">
                                         <td className="p-2">
                                             <div className="flex gap-2 items-center">
-                                                <FolderIcon className="w-5 h-5 text-yellow-500" />
+                                                <FolderIcon className={`w-5 h-5 ${folderColorClass(folder.color)}`} />
                                                 <Link href={route('files.index', { folder_id: folder.id })} className="hover:underline">
                                                     {folder.name}
                                                 </Link>
@@ -554,9 +629,35 @@ export default function FilesIndex({
                                         <td className="p-2 text-sm text-muted-foreground">—</td>
                                         <td className="p-2 text-sm text-muted-foreground">{folder.created_at}</td>
                                         <td className="p-2">
-                                            <button onClick={() => handleDeleteFolder(folder.id, folder.name)} className="p-1 rounded hover:bg-accent-foreground/10">
-                                                <Trash2 className="w-4 h-4 text-red-500" />
-                                            </button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button className="p-1 rounded hover:bg-accent-foreground/10">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleRename('folder', folder.id, folder.name)}>
+                                                        <Pencil className="mr-2 w-4 h-4" />
+                                                        Rename
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleColorChange(folder)}>
+                                                        <Palette className="mr-2 w-4 h-4" />
+                                                        Change Color
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleToggleStar('folder', folder.id)}>
+                                                        <Star className={`mr-2 h-4 w-4 ${folder.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                        {folder.is_starred ? 'Unstar' : 'Star'}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDeleteFolder(folder.id, folder.name)}
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </td>
                                     </tr>
                                 ))}
@@ -581,6 +682,10 @@ export default function FilesIndex({
                                                     </button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleRename('file', file.id, file.name)}>
+                                                        <Pencil className="mr-2 w-4 h-4" />
+                                                        Rename
+                                                    </DropdownMenuItem>
                                                     {isPreviewable(file.mime_type) && (
                                                         <DropdownMenuItem onClick={() => handlePreview(file)}>
                                                             <Eye className="mr-2 w-4 h-4" />
@@ -604,7 +709,7 @@ export default function FilesIndex({
                                                         onClick={() => handleDeleteFile(file.id, file.name)}
                                                         className="text-red-600 focus:text-red-600"
                                                     >
-                                                        <Trash2 className="mr-2 w-4 h-4" />
+                                                        <Trash2 className="mr-2 h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -748,6 +853,72 @@ export default function FilesIndex({
                         <Button variant="destructive" onClick={confirmDelete}>
                             <Trash2 className="mr-2 w-4 h-4" />
                             Move to trash
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Folder Color Picker Dialog */}
+            <Dialog open={!!colorTarget} onOpenChange={(open) => !open && setColorTarget(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Folder Color</DialogTitle>
+                        <DialogDescription>
+                            Choose a color for "{colorTarget?.name}"
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-4 gap-3 py-4">
+                        {[
+                            { name: null, label: 'Default', class: 'text-yellow-500' },
+                            { name: 'blue', label: 'Blue', class: 'text-blue-500' },
+                            { name: 'green', label: 'Green', class: 'text-green-500' },
+                            { name: 'red', label: 'Red', class: 'text-red-500' },
+                            { name: 'purple', label: 'Purple', class: 'text-purple-500' },
+                            { name: 'orange', label: 'Orange', class: 'text-orange-500' },
+                            { name: 'pink', label: 'Pink', class: 'text-pink-500' },
+                            { name: 'gray', label: 'Gray', class: 'text-gray-500' },
+                        ].map((c) => (
+                            <button
+                                key={c.label}
+                                onClick={() => setSelectedColor(c.name)}
+                                className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-colors hover:bg-accent ${selectedColor === c.name ? 'ring-2 ring-primary border-primary' : ''}`}
+                            >
+                                <FolderIcon className={`w-8 h-8 ${c.class}`} />
+                                <span className="text-xs">{c.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setColorTarget(null)}>Cancel</Button>
+                        <Button onClick={confirmColorChange}>
+                            <Palette className="mr-2 h-4 w-4" />
+                            Apply
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Rename Dialog */}
+            <Dialog open={!!renameTarget} onOpenChange={(open) => !open && setRenameTarget(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Rename {renameTarget?.type}</DialogTitle>
+                        <DialogDescription>
+                            Enter a new name for "{renameTarget?.name}"
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Input
+                        placeholder="New name"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
+                        autoFocus
+                    />
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button>
+                        <Button onClick={confirmRename} disabled={!renameValue.trim()}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Rename
                         </Button>
                     </DialogFooter>
                 </DialogContent>

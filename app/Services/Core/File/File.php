@@ -15,6 +15,8 @@ class File extends Model
 {
     use HasCreatedBy, HasMetadata, ServiceModel, SoftDeletes;
 
+    protected $appends = ['is_starred', 'url'];
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
