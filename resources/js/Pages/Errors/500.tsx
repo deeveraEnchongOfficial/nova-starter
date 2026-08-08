@@ -8,11 +8,11 @@ export default function ServerError() {
     };
 
     return (
-        <div className="flex h-svh w-full items-center justify-center bg-background">
+        <div className="flex justify-center items-center w-full h-svh bg-background">
             <Head title="500 — Server Error" />
 
-            <div className="flex flex-col items-center gap-6 px-4 text-center">
-                <div className="flex size-20 items-center justify-center rounded-full bg-destructive/10">
+            <div className="flex flex-col gap-6 items-center px-4 text-center">
+                <div className="flex justify-center items-center rounded-full size-20 bg-destructive/10">
                     <ServerCrash className="size-10 text-destructive" />
                 </div>
 

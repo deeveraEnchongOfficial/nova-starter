@@ -17,6 +17,7 @@ class RolePermissionSeeder extends Seeder
             'settings.view', 'settings.edit',
             'files.view', 'files.create', 'files.edit', 'files.delete',
             'activity-logs.view',
+            'ai-bot.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -49,8 +50,10 @@ class RolePermissionSeeder extends Seeder
             'settings.view',
             'files.view', 'files.create', 'files.edit', 'files.delete',
             'activity-logs.view',
+            'ai-bot.view',
         ]);
 
-        $createRole('User');
+        $user = $createRole('User');
+        $user->syncPermissions(['ai-bot.view']);
     }
 }

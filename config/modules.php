@@ -32,4 +32,12 @@ return [
         'route' => 'activity-logs.index',
         'permission' => 'activity-logs.view',
     ],
+
+    'ai-bot' => [
+        'enabled' => env('MODULE_AI_BOT_ENABLED', true),
+        'label' => 'AI Assistant',
+        'icon' => 'Bot',
+        'route' => null,
+        'permission' => 'ai-bot.view',
+    ],
 ];

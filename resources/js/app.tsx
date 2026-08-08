@@ -5,7 +5,9 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { AudioPlayerProvider } from '@/contexts/AudioPlayerContext';
+import { ChatBotProvider } from '@/contexts/ChatBotContext';
 import MiniPlayer from '@/Components/MiniPlayer';
+import ChatWidget from '@/Components/ai-bot/ChatWidget';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -24,8 +26,11 @@ createInertiaApp({
 
         createRoot(el).render(
             <AudioPlayerProvider>
-                <App {...props} />
-                <MiniPlayer />
+                <ChatBotProvider>
+                    <App {...props} />
+                    <MiniPlayer />
+                    <ChatWidget />
+                </ChatBotProvider>
             </AudioPlayerProvider>,
         );
     },

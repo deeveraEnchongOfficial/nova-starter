@@ -6,6 +6,7 @@ use App\Http\Controllers\App\Core\Setting\SettingController;
 use App\Http\Controllers\App\Core\User\UserController;
 use App\Http\Controllers\App\Core\Activity\ActivityController;
 use App\Http\Controllers\App\Core\File\FileController;
+use App\Http\Controllers\App\Core\AiBot\AiBotController;
 use App\Services\Core\Activity\ActivityRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,9 @@ Route::middleware('auth')->group(function () {
     Route::get('activity-logs', [ActivityController::class, 'index'])->name('activity-logs.index')->middleware('permission:activity-logs.view');
     Route::delete('activity-logs', [ActivityController::class, 'clear'])->name('activity-logs.clear')->middleware('permission:activity-logs.view');
     Route::get('activity-logs/{activity}', [ActivityController::class, 'show'])->name('activity-logs.show')->middleware('permission:activity-logs.view');
+
+    // AI Bot (chat endpoint only — UI is a floating widget)
+    Route::post('/ai-bot/chat', [AiBotController::class, 'chat'])->name('ai-bot.chat')->middleware('permission:ai-bot.view');
 });
 
 require __DIR__.'/auth.php';
