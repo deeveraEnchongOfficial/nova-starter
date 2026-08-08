@@ -8,12 +8,16 @@ use App\Http\Controllers\RestApi\SearchController;
 use App\Http\Controllers\RestApi\StorageUsageController;
 use App\Http\Controllers\RestApi\TrashController;
 use App\Http\Controllers\RestApi\UploadLogoController;
+use App\Http\Controllers\RestApi\ShareableUserController;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated routes
 Route::middleware(['auth:sanctum'])->group(function (): void {
     // Logo upload (settings)
     Route::post('/v1/settings/logo', UploadLogoController::class)->name('v1.settings.logo');
+
+    // Shareable users (for share dialog)
+    Route::get('/v1/shareable-users', ShareableUserController::class)->name('v1.shareable-users');
 
     // File upload (existing, extended with folder_id)
     Route::post('/v1/files/initiate', InitiateFileUploadController::class)->name('v1.files.initiate-upload')->middleware('permission:files.create');

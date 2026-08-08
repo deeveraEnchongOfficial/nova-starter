@@ -43,11 +43,13 @@ import {
     Palette,
     Pencil,
     Play,
+    Share2,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
 import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
+import ShareDialog from '@/Components/ShareDialog';
 
 interface FolderItem {
     id: string;
@@ -102,6 +104,7 @@ export default function FilesIndex({
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [renameTarget, setRenameTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
     const [renameValue, setRenameValue] = useState('');
+    const [shareTarget, setShareTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
     const { play: playAudio } = useAudioPlayer();
 
     const handlePlayAudio = useCallback((file: FileItem) => {
@@ -536,6 +539,10 @@ export default function FilesIndex({
                                                     <Star className={`mr-2 h-4 w-4 ${folder.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                     {folder.is_starred ? 'Unstar' : 'Star'}
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setShareTarget({ type: 'folder', id: folder.id, name: folder.name })}>
+                                                    <Share2 className="mr-2 w-4 h-4" />
+                                                    Share
+                                                </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     onClick={() => handleDeleteFolder(folder.id, folder.name)}
@@ -612,6 +619,10 @@ export default function FilesIndex({
                                                     <Star className={`mr-2 h-4 w-4 ${file.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                     {file.is_starred ? 'Unstar' : 'Star'}
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setShareTarget({ type: 'file', id: file.id, name: file.name })}>
+                                                    <Share2 className="mr-2 w-4 h-4" />
+                                                    Share
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setDetailsFile(file)}>
                                                     <Info className="mr-2 w-4 h-4" />
                                                     Details
@@ -673,6 +684,10 @@ export default function FilesIndex({
                                                         <Star className={`mr-2 h-4 w-4 ${folder.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                         {folder.is_starred ? 'Unstar' : 'Star'}
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setShareTarget({ type: 'folder', id: folder.id, name: folder.name })}>
+                                                        <Share2 className="mr-2 w-4 h-4" />
+                                                        Share
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem
                                                         onClick={() => handleDeleteFolder(folder.id, folder.name)}
@@ -730,6 +745,10 @@ export default function FilesIndex({
                                                     <DropdownMenuItem onClick={() => handleToggleStar('file', file.id)}>
                                                         <Star className={`mr-2 h-4 w-4 ${file.is_starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                         {file.is_starred ? 'Unstar' : 'Star'}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setShareTarget({ type: 'file', id: file.id, name: file.name })}>
+                                                        <Share2 className="mr-2 w-4 h-4" />
+                                                        Share
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => setDetailsFile(file)}>
                                                         <Info className="mr-2 w-4 h-4" />
@@ -958,6 +977,17 @@ export default function FilesIndex({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Share Dialog */}
+            {shareTarget && (
+                <ShareDialog
+                    open={!!shareTarget}
+                    onOpenChange={(open) => !open && setShareTarget(null)}
+                    resourceType={shareTarget.type}
+                    resourceId={shareTarget.id}
+                    resourceName={shareTarget.name}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

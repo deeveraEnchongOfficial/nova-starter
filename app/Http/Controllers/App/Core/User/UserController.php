@@ -59,7 +59,7 @@ class UserController extends Controller
             $validated['middle_name'],
             $validated['last_name'],
             $validated['email'],
-            tenant: null,
+            tenant: $request->user()->tenant,
             password: $validated['password'],
             createdBy: $request->user(),
         );
@@ -102,6 +102,7 @@ class UserController extends Controller
             $validated['middle_name'],
             $validated['last_name'],
             $validated['email'],
+            tenant: $user->tenant ?? $request->user()->tenant,
             password: $validated['password'] ?? null,
         );
 

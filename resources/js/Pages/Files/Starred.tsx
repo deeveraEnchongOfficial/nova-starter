@@ -29,6 +29,7 @@ import {
     MoreVertical,
     Eye,
     Play,
+    Share2,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { PageProps } from '@/types';
@@ -36,6 +37,7 @@ import axios from 'axios';
 import FilesTabs from '@/Components/FilesTabs';
 import ImageThumbnail from '@/Components/ImageThumbnail';
 import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
+import ShareDialog from '@/Components/ShareDialog';
 
 interface StarredFolder {
     id: string;
@@ -64,6 +66,7 @@ export default function FilesStarred({
     const [previewFile, setPreviewFile] = useState<StarredFile | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [shareTarget, setShareTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
     const { play: playAudio } = useAudioPlayer();
 
     const handlePlayAudio = useCallback((file: StarredFile) => {
@@ -223,6 +226,10 @@ export default function FilesStarred({
                                                     <Star className="mr-2 w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                     Unstar
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setShareTarget({ type: 'folder', id: folder.id, name: folder.name })}>
+                                                    <Share2 className="mr-2 w-4 h-4" />
+                                                    Share
+                                                </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     onClick={() => handleDeleteFolder(folder.id)}
@@ -286,6 +293,10 @@ export default function FilesStarred({
                                                 <DropdownMenuItem onClick={() => handleToggleStar('file', file.id)}>
                                                     <Star className="mr-2 w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                     Unstar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setShareTarget({ type: 'file', id: file.id, name: file.name })}>
+                                                    <Share2 className="mr-2 w-4 h-4" />
+                                                    Share
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
@@ -352,6 +363,17 @@ export default function FilesStarred({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Share Dialog */}
+            {shareTarget && (
+                <ShareDialog
+                    open={!!shareTarget}
+                    onOpenChange={(open) => !open && setShareTarget(null)}
+                    resourceType={shareTarget.type}
+                    resourceId={shareTarget.id}
+                    resourceName={shareTarget.name}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

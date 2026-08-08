@@ -80,6 +80,21 @@ class FolderRepository
     }
 
     /**
+     * Get folders shared with a specific user.
+     */
+    public function getSharedWithUser(Model $user)
+    {
+        $sharedFolderIds = Share::forUser($user)
+            ->where('shareable_type', (new Folder)->getMorphClass())
+            ->pluck('shareable_id')
+            ->toArray();
+
+        return Folder::whereIn('_id', $sharedFolderIds)
+            ->latest()
+            ->get();
+    }
+
+    /**
      * Get all descendant folder IDs (recursive).
      */
     public function getDescendantIds(string $folderId): array

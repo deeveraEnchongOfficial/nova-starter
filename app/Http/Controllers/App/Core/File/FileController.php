@@ -76,16 +76,18 @@ class FileController extends Controller
     }
 
     /**
-     * Display files shared with the user.
+     * Display files and folders shared with the user.
      */
     public function shared(Request $request)
     {
         $user = $request->user();
 
         $sharedFiles = $this->fileRepository->getSharedWithUser($user);
+        $sharedFolders = $this->folderRepository->getSharedWithUser($user);
 
         return Inertia::render('Files/Shared', [
             'sharedFiles' => $sharedFiles,
+            'sharedFolders' => $sharedFolders,
         ]);
     }
 }

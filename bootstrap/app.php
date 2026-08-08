@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,4 +37,30 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // Render Inertia error pages for HTTP errors on web routes
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return null;
+            }
+
+            $statusCode = $e->getStatusCode();
+            $page = match ($statusCode) {
+                403 => 'Errors/403',
+                404 => 'Errors/404',
+                500 => 'Errors/500',
+                default => null,
+            };
+
+            if ($page) {
+                return Inertia::render($page, [
+                    'status' => $statusCode,
+                    'message' => $e->getMessage(),
+                ])
+                    ->toResponse($request)
+                    ->setStatusCode($statusCode);
+            }
+
+            return null;
+        });
     })->create();

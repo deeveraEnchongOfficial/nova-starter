@@ -25,6 +25,6 @@ class CheckPermission
             }
         }
 
-        abort(403, __('You do not have permission to access this resource.'));
+        abort(403, __('Access Forbidden'));
     }
 }
