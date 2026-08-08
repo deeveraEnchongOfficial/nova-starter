@@ -82,12 +82,12 @@ export default function ChatWidget() {
         return (
             <button
                 onClick={open}
-                className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+                className="flex fixed right-5 bottom-5 z-50 justify-center items-center rounded-full shadow-lg transition-all size-11 bg-primary text-primary-foreground hover:scale-105 hover:shadow-xl"
                 aria-label="Open AI Assistant"
             >
-                <MessageSquare className="size-6" />
+                <MessageSquare className="size-5" />
                 {messages.length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                    <span className="flex absolute -top-1 -right-1 justify-center items-center text-[10px] font-bold text-white bg-red-500 rounded-full size-4">
                         {messages.length}
                     </span>
                 )}
@@ -98,9 +98,9 @@ export default function ChatWidget() {
     return (
         <div className="fixed bottom-6 right-6 z-50 flex w-[calc(100vw-3rem)] max-w-md flex-col rounded-xl border bg-background shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b p-3">
-                <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+            <div className="flex justify-between items-center p-3 border-b">
+                <div className="flex gap-2 items-center">
+                    <div className="flex justify-center items-center rounded-full size-8 bg-primary/10">
                         <Bot className="size-5 text-primary" />
                     </div>
                     <div>
@@ -108,7 +108,7 @@ export default function ChatWidget() {
                         <p className="text-xs text-muted-foreground">AI-powered helper</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex gap-1 items-center">
                     <button
                         onClick={toggleMinimize}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent"
@@ -130,10 +130,10 @@ export default function ChatWidget() {
             {!isMinimized && (
                 <>
                     {/* Messages */}
-                    <div ref={scrollRef} className="h-[400px] max-h-[50vh] overflow-y-auto p-4">
+                    <div ref={scrollRef} className="h-100 max-h-[50vh] overflow-y-auto p-4">
                         {messages.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-                                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+                            <div className="flex flex-col gap-4 justify-center items-center h-full text-center">
+                                <div className="flex justify-center items-center rounded-full size-14 bg-primary/10">
                                     <Bot className="size-7 text-primary" />
                                 </div>
                                 <div>
@@ -142,7 +142,7 @@ export default function ChatWidget() {
                                         Ask me anything about the app or get help with your tasks.
                                     </p>
                                 </div>
-                                <div className="flex flex-wrap justify-center gap-2">
+                                <div className="flex flex-wrap gap-2 justify-center">
                                     {SUGGESTIONS.map((s) => (
                                         <button
                                             key={s}
@@ -166,8 +166,8 @@ export default function ChatWidget() {
                                                 <Bot className="size-4 text-primary" />
                                             </AvatarFallback>
                                         </Avatar>
-                                        <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-                                            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                                        <div className="flex gap-2 items-center px-3 py-2 rounded-lg bg-muted">
+                                            <Loader2 className="animate-spin size-4 text-muted-foreground" />
                                             <span className="text-sm text-muted-foreground">Thinking...</span>
                                         </div>
                                     </div>
@@ -177,16 +177,16 @@ export default function ChatWidget() {
                     </div>
 
                     {/* Input */}
-                    <div className="border-t p-3">
+                    <div className="p-3 border-t">
                         {messages.length > 0 && (
-                            <div className="mb-2 flex justify-end">
+                            <div className="flex justify-end mb-2">
                                 <Button variant="ghost" size="sm" onClick={clearMessages} className="h-7 text-xs">
                                     <Trash2 className="mr-1 size-3" />
                                     Clear
                                 </Button>
                             </div>
                         )}
-                        <div className="flex items-end gap-2">
+                        <div className="flex gap-2 items-end">
                             <textarea
                                 ref={textareaRef}
                                 value={input}
@@ -194,7 +194,7 @@ export default function ChatWidget() {
                                 onKeyDown={handleKeyDown}
                                 placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
                                 rows={1}
-                                className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex-1 px-3 py-2 text-sm rounded-lg border resize-none border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 disabled={loading}
                             />
                             <Button
