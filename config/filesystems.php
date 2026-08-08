@@ -35,6 +35,13 @@ return [
             'visibility' => 'public-read',
             'max_size' => 1024 * 1024 * 5, // 5MB
         ],
+        'logo' => [
+            'allowed_types' => [
+                'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp',
+            ],
+            'visibility' => 'public-read',
+            'max_size' => 1024 * 1024 * 2, // 2MB
+        ],
         'document' => [
             'allowed_types' => ['*'],
             'visibility' => 'public-read',

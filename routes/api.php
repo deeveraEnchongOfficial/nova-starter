@@ -7,10 +7,14 @@ use App\Http\Controllers\RestApi\InitiateFileUploadController;
 use App\Http\Controllers\RestApi\SearchController;
 use App\Http\Controllers\RestApi\StorageUsageController;
 use App\Http\Controllers\RestApi\TrashController;
+use App\Http\Controllers\RestApi\UploadLogoController;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated routes
 Route::middleware(['auth:sanctum'])->group(function (): void {
+    // Logo upload (settings)
+    Route::post('/v1/settings/logo', UploadLogoController::class)->name('v1.settings.logo');
+
     // File upload (existing, extended with folder_id)
     Route::post('/v1/files/initiate', InitiateFileUploadController::class)->name('v1.files.initiate-upload')->middleware('permission:files.create');
     Route::post('/v1/files/confirm', ConfirmFileUploadController::class)->name('v1.files.confirm-upload')->middleware('permission:files.create');

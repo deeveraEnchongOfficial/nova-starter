@@ -45,14 +45,22 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={route('dashboard')}>
-                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                    <span className="text-sm font-bold">
-                                        {branding.short_name?.charAt(0) || branding.name.charAt(0)}
-                                    </span>
-                                </div>
-                                <div className="grid flex-1 text-start text-sm leading-tight">
-                                    <span className="truncate font-semibold">{branding.name}</span>
-                                    <span className="truncate text-xs text-muted-foreground">{branding.tagline}</span>
+                                {branding.logo ? (
+                                    <img
+                                        src={branding.logo}
+                                        alt={branding.name}
+                                        className="object-contain rounded-lg aspect-square size-8"
+                                    />
+                                ) : (
+                                    <div className="flex justify-center items-center rounded-lg aspect-square size-8 bg-sidebar-primary text-sidebar-primary-foreground">
+                                        <span className="text-sm font-bold">
+                                            {branding.short_name?.charAt(0) || branding.name.charAt(0)}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="grid flex-1 text-sm leading-tight text-start">
+                                    <span className="font-semibold truncate">{branding.name}</span>
+                                    <span className="text-xs truncate text-muted-foreground">{branding.tagline}</span>
                                 </div>
                             </Link>
                         </SidebarMenuButton>
@@ -210,12 +218,12 @@ function NavUser() {
                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                         <DropdownMenuTrigger>
-                            <Avatar className="h-8 w-8 rounded-lg">
+                            <Avatar className="w-8 h-8 rounded-lg">
                                 <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                             </Avatar>
-                            <div className="grid flex-1 text-start text-sm leading-tight">
-                                <span className="truncate font-semibold">{auth.user?.name}</span>
-                                <span className="truncate text-xs">{auth.user?.email}</span>
+                            <div className="grid flex-1 text-sm leading-tight text-start">
+                                <span className="font-semibold truncate">{auth.user?.name}</span>
+                                <span className="text-xs truncate">{auth.user?.email}</span>
                             </div>
                             <ChevronRight className="ms-auto size-4" />
                         </DropdownMenuTrigger>
@@ -228,23 +236,23 @@ function NavUser() {
                     >
                         <DropdownMenuLabel className="p-0 font-normal">
                             <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
+                                <Avatar className="w-8 h-8 rounded-lg">
                                     <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                                 </Avatar>
-                                <div className="grid flex-1 text-start text-sm leading-tight">
-                                    <span className="truncate font-semibold">{auth.user?.name}</span>
-                                    <span className="truncate text-xs">{auth.user?.email}</span>
+                                <div className="grid flex-1 text-sm leading-tight text-start">
+                                    <span className="font-semibold truncate">{auth.user?.name}</span>
+                                    <span className="text-xs truncate">{auth.user?.email}</span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => router.visit(route('profile.edit'))}>
-                            <User className="mr-2 h-4 w-4" />
+                            <User className="mr-2 w-4 h-4" />
                             Profile
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => router.post(route('logout'))}>
-                            <LogOut className="mr-2 h-4 w-4" />
+                            <LogOut className="mr-2 w-4 h-4" />
                             Log Out
                         </DropdownMenuItem>
                     </DropdownMenuContent>

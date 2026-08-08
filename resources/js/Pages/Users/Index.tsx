@@ -10,6 +10,9 @@ import { usePermission } from '@/hooks/use-permission';
 
 interface UserRow {
     id: string;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
     name: string;
     email: string;
     created_at: string;

@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from '@/Components/ui/select';
 import { Tabs, TabsContent } from '@/Components/ui/tabs';
+import LogoUpload from '@/Components/LogoUpload';
 import { useState } from 'react';
 import { Palette, Boxes, ToggleLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -128,15 +129,11 @@ export default function SettingsIndex({
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="logo">Logo URL</Label>
-                                        <Input
-                                            id="logo"
-                                            value={branding.logo}
-                                            onChange={(e) => setBranding({ ...branding, logo: e.target.value })}
-                                            placeholder="https://example.com/logo.png"
-                                        />
-                                    </div>
+                                    <LogoUpload
+                                        value={branding.logo}
+                                        onChange={(url) => setBranding({ ...branding, logo: url })}
+                                        label="Application Logo"
+                                    />
 
                                     <Button type="submit">Save Branding</Button>
                                 </form>

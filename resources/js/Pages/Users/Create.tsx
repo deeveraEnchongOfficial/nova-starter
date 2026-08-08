@@ -17,7 +17,9 @@ export default function UsersCreate({
     roles,
 }: PageProps<{ roles: Role[] }>) {
     const { data, setData, post, errors, processing } = useForm({
-        name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -61,15 +63,40 @@ export default function UsersCreate({
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={submit} className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="first_name">First Name</Label>
+                                    <Input
+                                        id="first_name"
+                                        value={data.first_name}
+                                        onChange={(e) => setData('first_name', e.target.value)}
+                                        required
+                                    />
+                                    {errors.first_name && <p className="text-sm text-destructive">{errors.first_name}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="last_name">Last Name</Label>
+                                    <Input
+                                        id="last_name"
+                                        value={data.last_name}
+                                        onChange={(e) => setData('last_name', e.target.value)}
+                                        required
+                                    />
+                                    {errors.last_name && <p className="text-sm text-destructive">{errors.last_name}</p>}
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="middle_name">
+                                    Middle Name <span className="text-muted-foreground">(optional)</span>
+                                </Label>
                                 <Input
-                                    id="name"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    required
+                                    id="middle_name"
+                                    value={data.middle_name}
+                                    onChange={(e) => setData('middle_name', e.target.value)}
                                 />
-                                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                                {errors.middle_name && <p className="text-sm text-destructive">{errors.middle_name}</p>}
                             </div>
 
                             <div className="space-y-2">

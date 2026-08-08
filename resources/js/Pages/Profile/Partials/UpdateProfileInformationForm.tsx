@@ -1,8 +1,9 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
+import { Button } from '@/Components/ui/button';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import { Alert, AlertDescription } from '@/Components/ui/alert';
+import { Badge } from '@/Components/ui/badge';
+import { CheckCircle2, MailX } from 'lucide-react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -27,125 +28,118 @@ export default function UpdateProfileInformation({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-
         patch(route('profile.update'));
     };
 
     return (
-        <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-foreground">
-                    Profile Information
-                </h2>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                    Update your account's profile information and email address.
-                </p>
-            </header>
-
-            <form onSubmit={submit} className="mt-6 space-y-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <InputLabel htmlFor="first_name" value="First Name" />
-
-                        <TextInput
-                            id="first_name"
-                            className="mt-1 block w-full"
-                            value={data.first_name}
-                            onChange={(e) => setData('first_name', e.target.value)}
-                            required
-                            isFocused
-                            autoComplete="given-name"
-                        />
-
-                        <InputError className="mt-2" message={errors.first_name} />
-                    </div>
-
-                    <div>
-                        <InputLabel htmlFor="last_name" value="Last Name" />
-
-                        <TextInput
-                            id="last_name"
-                            className="mt-1 block w-full"
-                            value={data.last_name}
-                            onChange={(e) => setData('last_name', e.target.value)}
-                            required
-                            autoComplete="family-name"
-                        />
-
-                        <InputError className="mt-2" message={errors.last_name} />
-                    </div>
-                </div>
-
-                <div>
-                    <InputLabel htmlFor="middle_name" value="Middle Name (optional)" />
-
-                    <TextInput
-                        id="middle_name"
-                        className="mt-1 block w-full"
-                        value={data.middle_name}
-                        onChange={(e) => setData('middle_name', e.target.value)}
-                        autoComplete="additional-name"
+        <form onSubmit={submit} className={className}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                    <Label htmlFor="first_name">First Name</Label>
+                    <Input
+                        id="first_name"
+                        value={data.first_name}
+                        onChange={(e) => setData('first_name', e.target.value)}
+                        required
+                        autoFocus
+                        autoComplete="given-name"
                     />
-
-                    <InputError className="mt-2" message={errors.middle_name} />
+                    {errors.first_name && (
+                        <p className="text-sm text-destructive">{errors.first_name}</p>
+                    )}
                 </div>
 
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                <div className="space-y-2">
+                    <Label htmlFor="last_name">Last Name</Label>
+                    <Input
+                        id="last_name"
+                        value={data.last_name}
+                        onChange={(e) => setData('last_name', e.target.value)}
+                        required
+                        autoComplete="family-name"
+                    />
+                    {errors.last_name && (
+                        <p className="text-sm text-destructive">{errors.last_name}</p>
+                    )}
+                </div>
+            </div>
 
-                    <TextInput
+            <div className="mt-4 space-y-2">
+                <Label htmlFor="middle_name">
+                    Middle Name <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Input
+                    id="middle_name"
+                    value={data.middle_name}
+                    onChange={(e) => setData('middle_name', e.target.value)}
+                    autoComplete="additional-name"
+                />
+                {errors.middle_name && (
+                    <p className="text-sm text-destructive">{errors.middle_name}</p>
+                )}
+            </div>
+
+            <div className="mt-4 space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                    <Input
                         id="email"
                         type="email"
-                        className="mt-1 block w-full"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
                         required
                         autoComplete="username"
+                        className="pr-24"
                     />
-
-                    <InputError className="mt-2" message={errors.email} />
+                    {user.email_verified_at ? (
+                        <Badge variant="secondary" className="absolute top-1/2 right-1.5 -translate-y-1/2 gap-1 text-emerald-600">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Verified
+                        </Badge>
+                    ) : (
+                        <Badge variant="outline" className="absolute top-1/2 right-1.5 -translate-y-1/2 gap-1 text-amber-600">
+                            <MailX className="w-3 h-3" />
+                            Unverified
+                        </Badge>
+                    )}
                 </div>
-
-                {mustVerifyEmail && user?.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-foreground">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
-                        {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600 dark:text-green-400">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
-                        )}
-                    </div>
+                {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
                 )}
+            </div>
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+            {mustVerifyEmail && user.email_verified_at === null && (
+                <Alert className="mt-4">
+                    <MailX className="w-4 h-4" />
+                    <AlertDescription>
+                        Your email address is unverified.{' '}
+                        <Link
+                            href={route('verification.send')}
+                            method="post"
+                            as="button"
+                            className="font-medium underline underline-offset-4 hover:text-foreground"
+                        >
+                            Click here to re-send the verification email.
+                        </Link>
+                    </AlertDescription>
+                </Alert>
+            )}
 
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm text-muted-foreground">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
-        </section>
+            {status === 'verification-link-sent' && (
+                <p className="mt-4 text-sm font-medium text-emerald-600">
+                    A new verification link has been sent to your email address.
+                </p>
+            )}
+
+            <div className="mt-6 flex items-center gap-4">
+                <Button type="submit" disabled={processing}>
+                    Save changes
+                </Button>
+
+                {recentlySuccessful && (
+                    <span className="text-sm text-muted-foreground">Saved.</span>
+                )}
+            </div>
+        </form>
     );
 }
