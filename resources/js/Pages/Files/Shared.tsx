@@ -1,10 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
-import { File as FileIcon, Home, Download } from 'lucide-react';
+import { File as FileIcon, Download } from 'lucide-react';
 import { useCallback } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
+import FilesTabs from '@/Components/FilesTabs';
 
 interface SharedFile {
     id: string;
@@ -43,11 +44,7 @@ export default function FilesShared({
             <Head title="Shared" />
 
             <div className="flex h-full flex-col gap-4">
-                <div className="flex items-center gap-2">
-                    <Link href={route('files.index')}>
-                        <Button variant="ghost" size="sm"><Home className="mr-1 h-4 w-4" /> My Files</Button>
-                    </Link>
-                </div>
+                <FilesTabs active="shared" />
 
                 <div className="flex-1 overflow-auto">
                     {sharedFiles.length === 0 ? (

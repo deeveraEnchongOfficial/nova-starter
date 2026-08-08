@@ -59,7 +59,7 @@ export default function UsersIndex({
                         </Badge>
                     ))}
                     {row.roles.length === 0 && (
-                        <span className="text-muted-foreground text-sm">No role</span>
+                        <span className="text-sm text-muted-foreground">No role</span>
                     )}
                 </div>
             ),
@@ -70,7 +70,7 @@ export default function UsersIndex({
             sortable: true,
             sortAccessor: (row) => row.created_at,
             cell: (row) => (
-                <span className="text-muted-foreground text-sm">
+                <span className="text-sm text-muted-foreground">
                     {new Date(row.created_at).toLocaleDateString()}
                 </span>
             ),
@@ -81,11 +81,11 @@ export default function UsersIndex({
             align: 'right',
             headerClassName: 'text-right',
             cell: (row) => (
-                <div className="flex justify-end gap-2">
+                <div className="flex gap-2 justify-end">
                     {hasPermission('users.edit') && (
                         <Button asChild variant="ghost" size="icon">
                             <Link href={route('users.edit', row.id)}>
-                                <Pencil className="h-4 w-4" />
+                                <Pencil className="w-4 h-4" />
                             </Link>
                         </Button>
                     )}
@@ -95,7 +95,7 @@ export default function UsersIndex({
                             size="icon"
                             onClick={() => handleDelete(row.id)}
                         >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                     )}
                 </div>
@@ -110,7 +110,7 @@ export default function UsersIndex({
             <Head title="Users" />
 
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
                         <p className="text-muted-foreground">Manage application users and their roles.</p>
@@ -118,7 +118,7 @@ export default function UsersIndex({
                     {hasPermission('users.create') && (
                         <Button asChild>
                             <Link href={route('users.create')}>
-                                <Plus className="mr-2 h-4 w-4" />
+                                <Plus className="mr-2 w-4 h-4" />
                                 Add User
                             </Link>
                         </Button>

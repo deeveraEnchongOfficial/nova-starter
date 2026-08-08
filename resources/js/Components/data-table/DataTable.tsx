@@ -101,9 +101,9 @@ export function DataTable<T>({
                     />
                 </CardContent>
             )}
-            <CardContent className="px-4 sm:px-6">
-                <div className="overflow-x-auto">
-                <Table>
+            <CardContent className="px-2 sm:px-4 md:px-6">
+                <div className="overflow-x-auto -mx-2 sm:-mx-4 md:-mx-6">
+                <Table className="min-w-full">
                     <TableHeader>
                         <TableRow>
                             {columns.map((col) => (

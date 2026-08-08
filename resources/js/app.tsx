@@ -4,6 +4,8 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
+import { AudioPlayerProvider } from '@/contexts/AudioPlayerContext';
+import MiniPlayer from '@/Components/MiniPlayer';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -20,7 +22,12 @@ createInertiaApp({
             return;
         }
 
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <AudioPlayerProvider>
+                <App {...props} />
+                <MiniPlayer />
+            </AudioPlayerProvider>,
+        );
     },
     progress: {
         color: '#4B5563',

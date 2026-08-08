@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
+import ImageThumbnail from '@/Components/ImageThumbnail';
+import FilesTabs from '@/Components/FilesTabs';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,10 +42,12 @@ import {
     Info,
     Palette,
     Pencil,
+    Play,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
+import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
 
 interface FolderItem {
     id: string;
@@ -98,6 +102,16 @@ export default function FilesIndex({
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [renameTarget, setRenameTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
     const [renameValue, setRenameValue] = useState('');
+    const { play: playAudio } = useAudioPlayer();
+
+    const handlePlayAudio = useCallback((file: FileItem) => {
+        const audioFiles = files.filter((f) => f.mime_type.startsWith('audio/'));
+        const track: AudioTrack = { id: file.id, name: file.name, mime_type: file.mime_type, size: file.size };
+        const playlist: AudioTrack[] = audioFiles.map((f) => ({
+            id: f.id, name: f.name, mime_type: f.mime_type, size: f.size,
+        }));
+        playAudio(track, playlist);
+    }, [files, playAudio]);
 
     const handleSearch = useCallback(async (value: string) => {
         setSearchQuery(value);
@@ -325,6 +339,16 @@ export default function FilesIndex({
         return <FileIcon className="w-8 h-8 text-gray-500" />;
     };
 
+    const getFileDisplay = (file: FileItem, size: 'small' | 'large' = 'small') => {
+        if (file.mime_type.startsWith('image/')) {
+            const sizeClass = size === 'large' ? 'w-12 h-12' : 'w-8 h-8';
+            return <ImageThumbnail src={file.url} alt={file.name} className={sizeClass} />;
+        }
+        return size === 'large' ?
+            <div className="flex justify-center items-center w-12 h-12">{getFileIcon(file.mime_type, file.name)}</div> :
+            getFileIcon(file.mime_type, file.name);
+    };
+
     const displayFolders = searchResults?.folders ?? folders;
     const displayFiles = searchResults?.files ?? files;
 
@@ -333,21 +357,8 @@ export default function FilesIndex({
             <Head title="Files" />
 
             <div className="flex flex-col gap-4 h-full">
-                {/* Sidebar nav links */}
-                <div className="flex gap-2 items-center">
-                    <Link href={route('files.index')}>
-                        <Button variant="ghost" size="sm">My Files</Button>
-                    </Link>
-                    <Link href={route('files.starred')}>
-                        <Button variant="ghost" size="sm"><Star className="mr-1 w-4 h-4" /> Starred</Button>
-                    </Link>
-                    <Link href={route('files.shared')}>
-                        <Button variant="ghost" size="sm">Shared</Button>
-                    </Link>
-                    <Link href={route('files.trash')}>
-                        <Button variant="ghost" size="sm"><Trash2 className="mr-1 w-4 h-4" /> Trash</Button>
-                    </Link>
-                </div>
+                {/* Tabs */}
+                <FilesTabs active="index" />
 
                 {/* Toolbar */}
                 <div className="flex gap-2 items-center">
@@ -493,7 +504,7 @@ export default function FilesIndex({
                                 >
                                     <FolderIcon className={`w-12 h-12 shrink-0 ${folderColorClass(folder.color)}`} />
                                     <p className="mt-2 w-full text-sm font-medium text-center truncate">{folder.name}</p>
-                                    <div className="absolute top-1 right-1 flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <div className="flex absolute top-1 right-1 items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -530,7 +541,7 @@ export default function FilesIndex({
                                                     onClick={() => handleDeleteFolder(folder.id, folder.name)}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <Trash2 className="mr-2 w-4 h-4" />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -544,8 +555,16 @@ export default function FilesIndex({
                                     className="flex relative flex-col items-center p-4 w-full rounded-lg border cursor-pointer group hover:bg-accent"
                                     onDoubleClick={() => isPreviewable(file.mime_type) ? handlePreview(file) : handleDownload(file.id)}
                                 >
-                                    <div className="flex justify-center items-center w-12 h-12 shrink-0">
-                                        {getFileIcon(file.mime_type, file.name)}
+                                    <div className="flex justify-center items-center shrink-0 relative">
+                                        {getFileDisplay(file, 'large')}
+                                        {file.mime_type.startsWith('audio/') && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handlePlayAudio(file); }}
+                                                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 hover:opacity-100 transition-opacity"
+                                            >
+                                                <Play className="w-6 h-6 text-white fill-white" />
+                                            </button>
+                                        )}
                                     </div>
                                     <p className="mt-2 w-full text-sm font-medium text-center truncate">{file.name}</p>
                                     <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
@@ -573,6 +592,12 @@ export default function FilesIndex({
                                                     <Pencil className="mr-2 w-4 h-4" />
                                                     Rename
                                                 </DropdownMenuItem>
+                                                {file.mime_type.startsWith('audio/') && (
+                                                    <DropdownMenuItem onClick={() => handlePlayAudio(file)}>
+                                                        <Play className="mr-2 w-4 h-4" />
+                                                        Play
+                                                    </DropdownMenuItem>
+                                                )}
                                                 {isPreviewable(file.mime_type) && (
                                                     <DropdownMenuItem onClick={() => handlePreview(file)}>
                                                         <Eye className="mr-2 w-4 h-4" />
@@ -596,7 +621,7 @@ export default function FilesIndex({
                                                     onClick={() => handleDeleteFile(file.id, file.name)}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <Trash2 className="mr-2 w-4 h-4" />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -653,7 +678,7 @@ export default function FilesIndex({
                                                         onClick={() => handleDeleteFolder(folder.id, folder.name)}
                                                         className="text-red-600 focus:text-red-600"
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        <Trash2 className="mr-2 w-4 h-4" />
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -668,7 +693,7 @@ export default function FilesIndex({
                                                 className="flex gap-2 items-center cursor-pointer"
                                                 onDoubleClick={() => isPreviewable(file.mime_type) ? handlePreview(file) : handleDownload(file.id)}
                                             >
-                                                {getFileIcon(file.mime_type, file.name)}
+                                                {getFileDisplay(file, 'small')}
                                                 <span>{file.name}</span>
                                             </div>
                                         </td>
@@ -686,6 +711,12 @@ export default function FilesIndex({
                                                         <Pencil className="mr-2 w-4 h-4" />
                                                         Rename
                                                     </DropdownMenuItem>
+                                                    {file.mime_type.startsWith('audio/') && (
+                                                        <DropdownMenuItem onClick={() => handlePlayAudio(file)}>
+                                                            <Play className="mr-2 w-4 h-4" />
+                                                            Play
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     {isPreviewable(file.mime_type) && (
                                                         <DropdownMenuItem onClick={() => handlePreview(file)}>
                                                             <Eye className="mr-2 w-4 h-4" />
@@ -709,7 +740,7 @@ export default function FilesIndex({
                                                         onClick={() => handleDeleteFile(file.id, file.name)}
                                                         className="text-red-600 focus:text-red-600"
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        <Trash2 className="mr-2 w-4 h-4" />
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -725,11 +756,11 @@ export default function FilesIndex({
 
             {/* File Preview Modal */}
             <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
-                <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-                    <DialogHeader>
+                <DialogContent className="max-w-none! gap-0! p-0! w-[95vw] h-[95vh] flex flex-col">
+                    <DialogHeader className="px-6 py-4 border-b shrink-0">
                         <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
                     </DialogHeader>
-                    <div className="flex justify-center items-center min-h-75 max-h-[75vh] overflow-auto">
+                    <div className="flex overflow-auto flex-1 justify-center items-center bg-black/5">
                         {previewLoading ? (
                             <p className="text-muted-foreground">Loading...</p>
                         ) : previewUrl ? (
@@ -737,14 +768,14 @@ export default function FilesIndex({
                                 <img
                                     src={previewUrl}
                                     alt={previewFile?.name}
-                                    className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                                    className="object-contain max-w-full max-h-full"
                                 />
                             ) : isVideo(previewFile?.mime_type ?? '') ? (
                                 <video
                                     src={previewUrl}
                                     controls
                                     autoPlay
-                                    className="max-w-full max-h-[75vh] rounded-lg"
+                                    className="object-contain max-w-full max-h-full"
                                 >
                                     Your browser does not support video playback.
                                 </video>
@@ -780,9 +811,13 @@ export default function FilesIndex({
                     {detailsFile && (
                         <div className="space-y-3">
                             <div className="flex justify-center items-center py-4">
-                                <div className="flex justify-center items-center w-16 h-16">
-                                    {getFileIcon(detailsFile.mime_type, detailsFile.name)}
-                                </div>
+                                {detailsFile.mime_type.startsWith('image/') ? (
+                                    <ImageThumbnail src={detailsFile.url} alt={detailsFile.name} className="w-32 h-32" />
+                                ) : (
+                                    <div className="flex justify-center items-center w-16 h-16">
+                                        {getFileIcon(detailsFile.mime_type, detailsFile.name)}
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <div className="flex justify-between py-2 border-b">
@@ -891,7 +926,7 @@ export default function FilesIndex({
                     <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setColorTarget(null)}>Cancel</Button>
                         <Button onClick={confirmColorChange}>
-                            <Palette className="mr-2 h-4 w-4" />
+                            <Palette className="mr-2 w-4 h-4" />
                             Apply
                         </Button>
                     </DialogFooter>
@@ -917,7 +952,7 @@ export default function FilesIndex({
                     <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button>
                         <Button onClick={confirmRename} disabled={!renameValue.trim()}>
-                            <Pencil className="mr-2 h-4 w-4" />
+                            <Pencil className="mr-2 w-4 h-4" />
                             Rename
                         </Button>
                     </DialogFooter>

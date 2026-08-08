@@ -43,7 +43,7 @@ export function DataTablePagination({
 
     return (
         <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                 {onPerPageChange && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
@@ -68,7 +68,7 @@ export function DataTablePagination({
                     Showing {from} to {to} of {total} results
                 </p>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
                 {prevLink && (
                     <Button asChild={!!prevLink.url} variant="outline" size="icon" disabled={!prevLink.url} className="h-8 w-8">
                         {prevLink.url ? (

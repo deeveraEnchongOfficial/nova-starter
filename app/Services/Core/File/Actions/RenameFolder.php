@@ -2,6 +2,7 @@
 
 namespace App\Services\Core\File\Actions;
 
+use App\Services\Core\File\File;
 use App\Services\Core\File\Folder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -22,7 +23,8 @@ class RenameFolder
         $folder->forceFill(['name' => $newName]);
         $newFullPath = $folder->full_path;
 
-        // Move all S3 objects from old prefix to new prefix
+        // Move all S3 objects from old prefix to new prefix and update
+        // the corresponding File records in the database.
         $this->moveS3Prefix($oldFullPath, $newFullPath, $disk);
 
         $folder->save();
@@ -36,7 +38,7 @@ class RenameFolder
     }
 
     /**
-     * Move all objects from one S3 prefix to another.
+     * Move all objects from one S3 prefix to another and sync File paths.
      */
     private function moveS3Prefix(string $from, string $to, string $disk): void
     {
@@ -45,6 +47,9 @@ class RenameFolder
         foreach ($files as $file) {
             $newPath = $to.substr($file, strlen($from));
             Storage::disk($disk)->move($file, $newPath);
+
+            // Keep the File record's path in sync with the new S3 key
+            File::where('path', $file)->update(['path' => $newPath]);
         }
     }
 

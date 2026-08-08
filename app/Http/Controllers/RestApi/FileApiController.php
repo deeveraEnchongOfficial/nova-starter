@@ -16,7 +16,6 @@ use App\Services\Core\File\FolderRepository;
 use App\Services\Core\File\SharePermission;
 use App\Services\Core\User\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class FileApiController extends Controller
@@ -172,42 +171,8 @@ class FileApiController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        // Generate a presigned URL using the external signing URL as endpoint
-        // so the browser can resolve the hostname and the signature matches.
-        $diskConfig = config("filesystems.disks.{$file->disk}");
-        $signingUrl = $diskConfig['signing_url'] ?? null;
-        $endpoint = $diskConfig['endpoint'] ?? null;
-
-        if ($signingUrl && $endpoint) {
-            // Build a temporary S3 client with the external endpoint for correct signing
-            $client = new \Aws\S3\S3Client([
-                'region' => $diskConfig['region'],
-                'version' => 'latest',
-                'signature_version' => 'v4',
-                'use_path_style_endpoint' => $diskConfig['use_path_style_endpoint'] ?? false,
-                'credentials' => [
-                    'key' => $diskConfig['key'],
-                    'secret' => $diskConfig['secret'],
-                ],
-                'endpoint' => $signingUrl,
-            ]);
-
-            $ttl = (int) ($diskConfig['presigned_request_ttl'] ?? 5);
-
-            $command = $client->getCommand('GetObject', [
-                'Bucket' => $diskConfig['bucket'],
-                'Key' => $file->path,
-            ]);
-
-            $url = (string) $client->createPresignedRequest($command, now()->addMinutes($ttl))->getUri();
-        } else {
-            // Fallback: use the disk's default temporaryUrl
-            $url = Storage::disk($file->disk)->temporaryUrl(
-                $file->path,
-                now()->addMinutes(5),
-            );
-        }
-
-        return response()->json(['url' => $url]);
+        // The url attribute already generates a presigned URL using the
+        // external signing_url endpoint when configured.
+        return response()->json(['url' => $file->url]);
     }
 }
