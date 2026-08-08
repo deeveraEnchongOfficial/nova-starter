@@ -17,17 +17,15 @@ class StorageUsageController extends Controller
 
         // Sum of all non-trashed file sizes owned by the user
         $usedBytes = File::ownedBy($user)
-            ->whereNull('deleted_at')
             ->sum('size');
 
-        // Count of files
+        // Count of files (non-trashed)
         $fileCount = File::ownedBy($user)
-            ->whereNull('deleted_at')
             ->count();
 
-        // Count of trashed files
+        // Count of trashed files (use onlyTrashed for MongoDB compatibility)
         $trashedCount = File::ownedBy($user)
-            ->whereNotNull('deleted_at')
+            ->onlyTrashed()
             ->count();
 
         // Try to get disk capacity from MinIO/S3 (best-effort, may fail)

@@ -2,10 +2,21 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
+import { Checkbox } from '@/Components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
 import { DataTable, type Column, type PaginatedData } from '@/Components/data-table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { PageProps } from '@/types';
 import { usePermission } from '@/hooks/use-permission';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface RoleRow {
     id: string;
@@ -18,24 +29,93 @@ export default function RolesIndex({
     roles,
 }: PageProps<{ roles: PaginatedData<RoleRow> }>) {
     const { hasPermission } = usePermission();
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
-    const handleDelete = (id: string, name: string) => {
-        if (name === 'Super Admin') {
-            alert('Cannot delete the Super Admin role.');
-            return;
-        }
-        if (confirm(`Are you sure you want to delete the role "${name}"?`)) {
-            router.delete(route('roles.destroy', id));
-        }
+    const toggleRow = (id: string) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
     };
 
+    const toggleAll = (rows: RoleRow[]) => {
+        setSelectedIds((prev) => {
+            const allSelected = rows.every((r) => prev.has(r.id));
+            if (allSelected) {
+                return new Set();
+            }
+            return new Set(rows.map((r) => r.id));
+        });
+    };
+
+    const handleBulkDelete = () => {
+        const ids = Array.from(selectedIds);
+        const count = ids.length;
+        setDeleting(true);
+        ids.forEach((id, idx) => {
+            router.delete(route('roles.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (idx === count - 1) {
+                        toast.success(`Deleted ${count > 1 ? `${count} roles` : 'role'} successfully.`);
+                    }
+                },
+            });
+        });
+        setSelectedIds(new Set());
+        setShowDeleteDialog(false);
+        setDeleting(false);
+    };
+
+    const canDelete = hasPermission('roles.delete');
+    const canEdit = hasPermission('roles.edit');
+
+    const allRows = roles.data;
+    const allSelected = allRows.length > 0 && allRows.every((r) => selectedIds.has(r.id));
+
     const columns: Column<RoleRow>[] = [
+        ...(canDelete ? [{
+            key: 'select',
+            header: (
+                <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={() => toggleAll(allRows)}
+                />
+            ),
+            cell: (row: RoleRow) => (
+                <Checkbox
+                    checked={selectedIds.has(row.id)}
+                    onCheckedChange={() => toggleRow(row.id)}
+                    disabled={row.name === 'Super Admin'}
+                />
+            ),
+            className: 'w-10',
+            headerClassName: 'w-10',
+        }] : []),
         {
             key: 'name',
             header: 'Name',
             sortable: true,
             sortAccessor: (row) => row.name,
-            cell: (row) => <span className="font-medium">{row.name}</span>,
+            cell: (row) => (
+                canEdit ? (
+                    <Link
+                        href={route('roles.edit', row.id)}
+                        className="font-medium text-foreground hover:underline"
+                    >
+                        {row.name}
+                    </Link>
+                ) : (
+                    <span className="font-medium">{row.name}</span>
+                )
+            ),
         },
         {
             key: 'users_count',
@@ -65,32 +145,6 @@ export default function RolesIndex({
                 </div>
             ),
         },
-        {
-            key: 'actions',
-            header: 'Actions',
-            align: 'right',
-            headerClassName: 'text-right',
-            cell: (row) => (
-                <div className="flex gap-2 justify-end">
-                    {hasPermission('roles.edit') && (
-                        <Button asChild variant="ghost" size="icon">
-                            <Link href={route('roles.edit', row.id)}>
-                                <Pencil className="w-4 h-4" />
-                            </Link>
-                        </Button>
-                    )}
-                    {hasPermission('roles.delete') && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(row.id, row.name)}
-                        >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                    )}
-                </div>
-            ),
-        },
     ];
 
     return (
@@ -105,14 +159,22 @@ export default function RolesIndex({
                         <h1 className="text-2xl font-bold tracking-tight">Roles & Permissions</h1>
                         <p className="text-muted-foreground">Manage roles and their permissions.</p>
                     </div>
-                    {hasPermission('roles.create') && (
-                        <Button asChild>
-                            <Link href={route('roles.create')}>
-                                <Plus className="mr-2 w-4 h-4" />
-                                Add Role
-                            </Link>
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {canDelete && selectedIds.size > 0 && (
+                            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                                <Trash2 className="mr-2 w-4 h-4" />
+                                Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ''}
+                            </Button>
+                        )}
+                        {hasPermission('roles.create') && (
+                            <Button asChild>
+                                <Link href={route('roles.create')}>
+                                    <Plus className="mr-2 w-4 h-4" />
+                                    Add Role
+                                </Link>
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 <DataTable
@@ -122,6 +184,29 @@ export default function RolesIndex({
                     emptyMessage="No roles found."
                 />
             </div>
+
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Delete {selectedIds.size > 1 ? `${selectedIds.size} roles` : 'role'}</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete {selectedIds.size > 1
+                                ? `${selectedIds.size} roles`
+                                : 'this role'
+                            }? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleBulkDelete} disabled={deleting}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {deleting ? 'Deleting...' : `Delete ${selectedIds.size > 1 ? `${selectedIds.size} roles` : 'role'}`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AuthenticatedLayout>
     );
 }

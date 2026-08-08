@@ -7,6 +7,9 @@ import remarkGfm from 'remark-gfm';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useChatBot, type ChatMessage } from '@/contexts/ChatBotContext';
+import { useAudioPlayer } from '@/contexts/AudioPlayerContext';
+import { usePage } from '@inertiajs/react';
+import type { PageProps } from '@/types';
 
 const SUGGESTIONS = [
     'What can you help me with?',
@@ -16,10 +19,15 @@ const SUGGESTIONS = [
 
 export default function ChatWidget() {
     const { isOpen, isMinimized, messages, open, close, toggleMinimize, addMessage, setMessages, clearMessages } = useChatBot();
+    const { currentTrack } = useAudioPlayer();
+    const { modules } = usePage<PageProps>().props;
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // When the media player is active, shift the widget up to avoid overlap
+    const playerOffset = currentTrack ? 'bottom-24' : 'bottom-5';
 
     const scrollToBottom = useCallback(() => {
         if (scrollRef.current) {
@@ -77,12 +85,15 @@ export default function ChatWidget() {
         }
     }, [input]);
 
+    // Hide the widget entirely if the AI Assistant module is disabled
+    if (!modules['ai-bot']?.enabled) return null;
+
     // Floating button when closed
     if (!isOpen) {
         return (
             <button
                 onClick={open}
-                className="flex fixed right-5 bottom-5 z-50 justify-center items-center rounded-full shadow-lg transition-all size-11 bg-primary text-primary-foreground hover:scale-105 hover:shadow-xl"
+                className={`flex fixed right-5 z-50 justify-center items-center rounded-full shadow-lg transition-all ${playerOffset} size-11 bg-primary text-primary-foreground hover:scale-105 hover:shadow-xl`}
                 aria-label="Open AI Assistant"
             >
                 <MessageSquare className="size-5" />
@@ -96,7 +107,7 @@ export default function ChatWidget() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex w-[calc(100vw-3rem)] max-w-md flex-col rounded-xl border bg-background shadow-2xl">
+        <div className={`fixed ${currentTrack ? 'bottom-28' : 'bottom-6'} right-6 z-50 flex w-[calc(100vw-3rem)] max-w-md flex-col rounded-xl border bg-background shadow-2xl transition-all duration-200`}>
             {/* Header */}
             <div className="flex justify-between items-center p-3 border-b">
                 <div className="flex gap-2 items-center">

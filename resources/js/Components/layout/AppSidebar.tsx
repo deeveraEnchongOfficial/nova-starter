@@ -47,7 +47,7 @@ export function AppSidebar() {
                             <Link href={route('dashboard')}>
                                 {branding.logo ? (
                                     <img
-                                        src={branding.logo}
+                                        src={branding.logo as string}
                                         alt={branding.name}
                                         className="object-contain rounded-lg aspect-square size-8"
                                     />

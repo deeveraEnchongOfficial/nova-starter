@@ -7,7 +7,6 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { AudioPlayerProvider } from '@/contexts/AudioPlayerContext';
 import { ChatBotProvider } from '@/contexts/ChatBotContext';
 import MiniPlayer from '@/Components/MiniPlayer';
-import ChatWidget from '@/Components/ai-bot/ChatWidget';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -29,7 +28,6 @@ createInertiaApp({
                 <ChatBotProvider>
                     <App {...props} />
                     <MiniPlayer />
-                    <ChatWidget />
                 </ChatBotProvider>
             </AudioPlayerProvider>,
         );

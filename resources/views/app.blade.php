@@ -7,6 +7,18 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Favicon (uses the application logo) -->
+        @php
+            $branding = app(\App\Services\BrandingService::class)->all();
+            $favicon = $branding['logo'] ?? null;
+        @endphp
+        @if ($favicon)
+            <link rel="icon" type="image/x-icon" href="{{ $favicon }}?v={{ md5($favicon) }}">
+            <link rel="apple-touch-icon" href="{{ $favicon }}?v={{ md5($favicon) }}">
+        @else
+            <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        @endif
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

@@ -8,6 +8,7 @@ import { usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 import Cookies from 'js-cookie';
 import type { PageProps } from '@/types';
+import ChatWidget from '@/Components/ai-bot/ChatWidget';
 
 export default function Authenticated({
     header,
@@ -30,6 +31,7 @@ export default function Authenticated({
                 </SidebarInset>
             </SidebarProvider>
             <Toaster />
+            <ChatWidget />
         </ThemeProvider>
     );
 }

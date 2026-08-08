@@ -53,6 +53,12 @@ class Setting extends Model
         if ($tenant) {
             $data['tenant_type'] = 'core.organization';
             $data['tenant_id'] = $tenant->getKey();
+        } elseif (config('features.multi_tenant', false)) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            if ($user && $user->tenant_id && $user->tenant_type) {
+                $data['tenant_type'] = $user->tenant_type;
+                $data['tenant_id'] = $user->tenant_id;
+            }
         }
 
         static::updateOrCreate(
