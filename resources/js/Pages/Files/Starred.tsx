@@ -1,6 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/Components/ui/button';
+import { Head, router } from '@inertiajs/react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -178,14 +177,14 @@ export default function FilesStarred({
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-foreground">Starred</h2>}>
             <Head title="Starred" />
 
-            <div className="flex h-full flex-col gap-4">
+            <div className="flex flex-col gap-4 h-full">
                 <FilesTabs active="starred" />
 
-                <div className="flex-1 overflow-auto">
+                <div className="overflow-auto flex-1">
                     {totalItems === 0 ? (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                        <div className="flex justify-center items-center h-full text-muted-foreground">
                             <div className="text-center">
-                                <Star className="mx-auto mb-2 h-12 w-12 opacity-50" />
+                                <Star className="mx-auto mb-2 w-12 h-12 opacity-50" />
                                 <p>No starred items</p>
                                 <p className="text-sm">Star files and folders to find them quickly here</p>
                             </div>
@@ -195,33 +194,33 @@ export default function FilesStarred({
                             {starredFolders.map((folder) => (
                                 <div
                                     key={folder.id}
-                                    className="group relative flex cursor-pointer flex-col items-center rounded-lg border p-4 hover:bg-accent"
+                                    className="flex relative flex-col items-center p-4 rounded-lg border cursor-pointer group hover:bg-accent"
                                     onDoubleClick={() => router.visit(route('files.index', { folder_id: folder.id }))}
                                 >
                                     <FolderIcon className={`h-12 w-12 ${folderColorClass(folder.color)}`} />
-                                    <p className="mt-2 w-full truncate text-center text-sm font-medium">{folder.name}</p>
-                                    <div className="absolute right-1 top-1 flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <p className="mt-2 w-full text-sm font-medium text-center truncate">{folder.name}</p>
+                                    <div className="flex absolute top-1 right-1 items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleToggleStar('folder', folder.id);
                                             }}
-                                            className="rounded p-1 hover:bg-accent-foreground/10"
+                                            className="p-1 rounded hover:bg-accent-foreground/10"
                                         >
-                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                         </button>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <button
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="rounded p-1 hover:bg-accent-foreground/10"
+                                                    className="p-1 rounded hover:bg-accent-foreground/10"
                                                 >
                                                     <MoreVertical className="w-4 h-4" />
                                                 </button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenuItem onClick={() => handleToggleStar('folder', folder.id)}>
-                                                    <Star className="mr-2 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                                    <Star className="mr-2 w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                     Unstar
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
@@ -240,29 +239,29 @@ export default function FilesStarred({
                             {starredFiles.map((file) => (
                                 <div
                                     key={file.id}
-                                    className="group relative flex cursor-pointer flex-col items-center rounded-lg border p-4 hover:bg-accent"
+                                    className="flex relative flex-col items-center p-4 rounded-lg border cursor-pointer group hover:bg-accent"
                                     onDoubleClick={() => isPreviewable(file.mime_type) ? handlePreview(file) : handleDownload(file.id)}
                                 >
                                     <div className="flex justify-center items-center shrink-0">
                                         {getFileDisplay(file)}
                                     </div>
-                                    <p className="mt-2 w-full truncate text-center text-sm font-medium">{file.name}</p>
+                                    <p className="mt-2 w-full text-sm font-medium text-center truncate">{file.name}</p>
                                     <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
-                                    <div className="absolute right-1 top-1 flex items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                    <div className="flex absolute top-1 right-1 items-center opacity-100 md:opacity-0 md:group-hover:opacity-100">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleToggleStar('file', file.id);
                                             }}
-                                            className="rounded p-1 hover:bg-accent-foreground/10"
+                                            className="p-1 rounded hover:bg-accent-foreground/10"
                                         >
-                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                         </button>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <button
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="rounded p-1 hover:bg-accent-foreground/10"
+                                                    className="p-1 rounded hover:bg-accent-foreground/10"
                                                 >
                                                     <MoreVertical className="w-4 h-4" />
                                                 </button>
@@ -285,7 +284,7 @@ export default function FilesStarred({
                                                     Download
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleToggleStar('file', file.id)}>
-                                                    <Star className="mr-2 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                                    <Star className="mr-2 w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                     Unstar
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
@@ -309,10 +308,10 @@ export default function FilesStarred({
             {/* Preview Dialog */}
             <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
                 <DialogContent className="max-w-none! gap-0! p-0! w-[95vw] h-[95vh] flex flex-col">
-                    <DialogHeader className="shrink-0 px-6 py-4 border-b">
+                    <DialogHeader className="px-6 py-4 border-b shrink-0">
                         <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
                     </DialogHeader>
-                    <div className="flex justify-center items-center flex-1 overflow-auto bg-black/5">
+                    <div className="flex overflow-auto flex-1 justify-center items-center bg-black/5">
                         {previewLoading ? (
                             <p className="text-muted-foreground">Loading...</p>
                         ) : previewUrl ? (
@@ -320,14 +319,14 @@ export default function FilesStarred({
                                 <img
                                     src={previewUrl}
                                     alt={previewFile?.name}
-                                    className="max-w-full max-h-full object-contain"
+                                    className="object-contain max-w-full max-h-full"
                                 />
                             ) : isVideo(previewFile?.mime_type ?? '') ? (
                                 <video
                                     src={previewUrl}
                                     controls
                                     autoPlay
-                                    className="max-w-full max-h-full object-contain"
+                                    className="object-contain max-w-full max-h-full"
                                 >
                                     Your browser does not support video playback.
                                 </video>

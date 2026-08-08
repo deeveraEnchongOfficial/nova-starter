@@ -90,7 +90,7 @@ export function DataTable<T>({
     return (
         <Card>
             {hasToolbar && (
-                <CardContent className="border-b px-4 py-4 sm:px-6">
+                <CardContent className="px-4 py-4 border-b sm:px-6">
                     <DataTableToolbar
                         searchable={searchable}
                         searchPlaceholder={searchPlaceholder}
@@ -146,7 +146,7 @@ export function DataTable<T>({
                 </div>
             </CardContent>
             {paginated && (
-                <CardContent className="border-t px-0">
+                <CardContent className="px-0 border-t">
                     <DataTablePagination
                         from={data.from}
                         to={data.to}

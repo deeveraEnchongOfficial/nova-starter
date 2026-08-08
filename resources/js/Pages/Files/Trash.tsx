@@ -73,11 +73,11 @@ export default function FilesTrash({
             sortable: true,
             sortAccessor: (row) => row.name,
             cell: (row) => (
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2 items-center">
                     {row.type === 'folder' ? (
-                        <FolderIcon className="h-5 w-5 text-yellow-500 shrink-0" />
+                        <FolderIcon className="w-5 h-5 text-yellow-500 shrink-0" />
                     ) : (
-                        <FileIcon className="h-5 w-5 text-gray-500 shrink-0" />
+                        <FileIcon className="w-5 h-5 text-gray-500 shrink-0" />
                     )}
                     <span className="font-medium">{row.name}</span>
                 </div>
@@ -111,7 +111,7 @@ export default function FilesTrash({
             align: 'right',
             headerClassName: 'text-right',
             cell: (row) => (
-                <div className="flex justify-end gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button
                         onClick={() => {
                             if (row.type === 'folder') {
@@ -123,7 +123,7 @@ export default function FilesTrash({
                         variant="ghost"
                         size="sm"
                     >
-                        <RotateCcw className="mr-1 h-4 w-4" />
+                        <RotateCcw className="mr-1 w-4 h-4" />
                         Restore
                     </Button>
                 </div>
@@ -137,20 +137,20 @@ export default function FilesTrash({
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-foreground">Trash</h2>}>
             <Head title="Trash" />
 
-            <div className="flex h-full flex-col gap-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 h-full">
+                <div className="flex justify-between items-center">
                     <FilesTabs active="trash" />
                     {totalItems > 0 && (
                         <Button onClick={handleEmptyTrash} variant="destructive" size="sm">
-                            <Trash2 className="mr-1 h-4 w-4" /> Empty Trash
+                            <Trash2 className="mr-1 w-4 h-4" /> Empty Trash
                         </Button>
                     )}
                 </div>
 
                 {totalItems === 0 ? (
-                    <div className="flex flex-1 items-center justify-center text-muted-foreground">
+                    <div className="flex flex-1 justify-center items-center text-muted-foreground">
                         <div className="text-center">
-                            <Trash2 className="mx-auto mb-2 h-12 w-12 opacity-50" />
+                            <Trash2 className="mx-auto mb-2 w-12 h-12 opacity-50" />
                             <p>Trash is empty</p>
                         </div>
                     </div>

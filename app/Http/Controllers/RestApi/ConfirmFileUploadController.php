@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Core\File\Actions\ConfirmFileUpload;
 use App\Services\Core\File\FileCategory;
 use App\Services\Core\File\FileRepository;
-use App\Services\Core\File\Folder;
 use App\Services\Core\File\FolderRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

@@ -11,7 +11,6 @@ use App\Services\Core\File\Actions\ShareResource;
 use App\Services\Core\File\Actions\ToggleStar;
 use App\Services\Core\File\File;
 use App\Services\Core\File\FileRepository;
-use App\Services\Core\File\Folder;
 use App\Services\Core\File\FolderRepository;
 use App\Services\Core\File\SharePermission;
 use App\Services\Core\User\User;

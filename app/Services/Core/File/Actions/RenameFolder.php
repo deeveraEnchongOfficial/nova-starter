@@ -4,7 +4,6 @@ namespace App\Services\Core\File\Actions;
 
 use App\Services\Core\File\File;
 use App\Services\Core\File\Folder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 class RenameFolder
