@@ -4,10 +4,15 @@ namespace App\Services\Core\File\Actions;
 
 use App\Services\Core\File\Share;
 use App\Services\Core\File\SharePermission;
+use App\Services\Core\File\ShareRepository;
 use Illuminate\Database\Eloquent\Model;
 
 class ShareResource
 {
+    public function __construct(
+        private readonly ShareRepository $shareRepository,
+    ) {}
+
     /**
      * Share a resource (File or Folder) with a user.
      *
@@ -23,9 +28,7 @@ class ShareResource
         Model $sharedBy,
     ): Share {
         // Check if share already exists, update if so
-        $share = Share::forResource($resource)
-            ->forUser($sharedWith)
-            ->first();
+        $share = $this->shareRepository->findForResourceAndUser($resource, $sharedWith);
 
         if ($share) {
             $share->forceFill(['permission_value' => $permission->value]);

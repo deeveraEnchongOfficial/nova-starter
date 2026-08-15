@@ -19,9 +19,6 @@ use Illuminate\Support\Facades\DB;
  */
 return new class extends Migration
 {
-    private const CORE_DB_SUFFIX = '_core';
-    private const PRIMARY_DB_SUFFIX = '_primary';
-
     private const CORE_COLLECTIONS = [
         'users',
         'files',

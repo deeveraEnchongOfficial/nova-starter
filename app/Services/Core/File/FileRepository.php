@@ -3,7 +3,7 @@
 namespace App\Services\Core\File;
 
 use App\Support\Database\Traits\BaseRepository;
-use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
@@ -43,7 +43,7 @@ class FileRepository
             ->ownedBy($owner)
             ->when($folderId, fn ($q) => $q->where('folder_id', $folderId))
             ->when(! $folderId, fn ($q) => $q->whereNull('folder_id'))
-            ->when(! $includeTrashed, fn ($q) => $q)
+            ->when($includeTrashed, fn ($q) => $q->withTrashed())
             ->with($with)
             ->latest()
             ->get();
@@ -96,10 +96,7 @@ class FileRepository
      */
     public function getSharedWithUser(Model $user)
     {
-        $sharedFileIds = Share::forUser($user)
-            ->where('shareable_type', (new File)->getMorphClass())
-            ->pluck('shareable_id')
-            ->toArray();
+        $sharedFileIds = app(ShareRepository::class)->sharedFileIdsForUser($user);
 
         return File::tenantAware()
             ->whereIn('_id', $sharedFileIds)

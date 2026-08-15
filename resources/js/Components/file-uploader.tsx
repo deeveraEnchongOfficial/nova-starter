@@ -117,15 +117,16 @@ async function uploadFile(
                 entry.key,
             ),
         );
-    } catch (error: any) {
-        if (error.status === 422) {
+    } catch (error: unknown) {
+        const err = error as { status?: number; statusText?: string; response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+        if (err.status === 422) {
             validationErrorListeners.forEach((listener) =>
                 listener(
                     {
-                        status: error.status,
-                        statusText: error.statusText,
-                        message: error.response?.data?.message,
-                        errors: error.response?.data?.errors,
+                        status: err.status,
+                        statusText: err.statusText,
+                        message: err.response?.data?.message || 'Validation failed',
+                        errors: err.response?.data?.errors,
                         root: error,
                     },
                     entry.key,
@@ -135,9 +136,9 @@ async function uploadFile(
             errorListeners.forEach((listener) =>
                 listener(
                     {
-                        status: error.status,
-                        statusText: error.statusText,
-                        message: error.response?.data?.message || error.message,
+                        status: err.status,
+                        statusText: err.statusText,
+                        message: err.response?.data?.message || 'Upload failed',
                         root: error,
                     },
                     entry.key,

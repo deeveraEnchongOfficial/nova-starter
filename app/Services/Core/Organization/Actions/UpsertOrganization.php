@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class UpsertOrganization
 {
     /**
-     * Execute the action to update or create a organization.
+     * Execute the action to update or create an organization.
      */
     public function execute(
         Organization $organization,

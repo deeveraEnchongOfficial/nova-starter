@@ -59,8 +59,9 @@ export default function ChatWidget() {
                 content: response.data.message,
             };
             addMessage(assistantMessage);
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Failed to get a response. Please try again.');
+        } catch (error: unknown) {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to get a response. Please try again.';
+            toast.error(message);
         } finally {
             setLoading(false);
         }

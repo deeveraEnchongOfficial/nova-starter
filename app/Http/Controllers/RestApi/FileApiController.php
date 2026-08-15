@@ -12,6 +12,7 @@ use App\Services\Core\File\Actions\ToggleStar;
 use App\Services\Core\File\File;
 use App\Services\Core\File\FileRepository;
 use App\Services\Core\File\FolderRepository;
+use App\Services\Core\File\Share;
 use App\Services\Core\File\SharePermission;
 use App\Services\Core\User\User;
 use Illuminate\Http\Request;
@@ -45,6 +46,10 @@ class FileApiController extends Controller
         $file = $this->fileRepository->findById($id);
 
         if (! $file) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        if (! $this->canAccessFile($file, request()->user())) {
             return response()->json(['message' => 'File not found'], 404);
         }
 
@@ -100,7 +105,7 @@ class FileApiController extends Controller
      */
     public function restore(string $id)
     {
-        $file = File::withTrashed()->find($id);
+        $file = File::tenantAware()->withTrashed()->find($id);
 
         if (! $file) {
             return response()->json(['message' => 'File not found'], 404);
@@ -180,5 +185,21 @@ class FileApiController extends Controller
 
             return response()->json(['message' => 'Failed to generate download URL'], 500);
         }
+    }
+
+    /**
+     * Check if the user can access a file (owner or shared with).
+     */
+    protected function canAccessFile(File $file, User $user): bool
+    {
+        if ($file->created_by_id === $user->id) {
+            return true;
+        }
+
+        return Share::tenantAware()
+            ->where('shareable_type', $file->getMorphClass())
+            ->where('shareable_id', $file->id)
+            ->where('shared_with_id', $user->id)
+            ->exists();
     }
 }

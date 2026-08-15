@@ -79,7 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('activity-logs/{activity}', [ActivityController::class, 'show'])->name('activity-logs.show')->middleware('permission:activity-logs.view');
 
     // AI Bot (chat endpoint only — UI is a floating widget)
-    Route::post('/ai-bot/chat', [AiBotController::class, 'chat'])->name('ai-bot.chat')->middleware('permission:ai-bot.view');
+    Route::post('/ai-bot/chat', [AiBotController::class, 'chat'])->name('ai-bot.chat')->middleware(['permission:ai-bot.view', 'throttle:10,1']);
 });
 
 require __DIR__.'/auth.php';

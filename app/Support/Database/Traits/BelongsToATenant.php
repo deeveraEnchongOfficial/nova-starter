@@ -62,7 +62,7 @@ trait BelongsToATenant
             }
 
             // No authenticated user with tenant — return nothing
-            return $query->whereRaw('1 = 0');
+            return $query->where('_id', null);
         }
 
         // Multi-tenant disabled — only return records without a tenant

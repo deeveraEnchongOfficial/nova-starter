@@ -6,7 +6,7 @@ use App\Services\Core\File\File;
 use App\Services\Core\File\FileRepository;
 use App\Services\Core\File\Folder;
 use App\Services\Core\File\FolderRepository;
-use App\Services\Core\File\Share;
+use App\Services\Core\File\ShareRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,6 +15,7 @@ class EmptyTrash
     public function __construct(
         private readonly FolderRepository $folderRepository,
         private readonly FileRepository $fileRepository,
+        private readonly ShareRepository $shareRepository,
     ) {}
 
     /**
@@ -38,9 +39,9 @@ class EmptyTrash
         $trashedFiles = $this->fileRepository->getTrashed($owner);
         $trashedFileIds = $trashedFiles->pluck('_id')->toArray();
         foreach ($trashedFiles as $file) {
-            Share::forResource($file)->delete();
+            $this->shareRepository->deleteForResource($file);
         }
-        File::withTrashed()->whereIn('_id', $trashedFileIds)->each(function ($file) {
+        File::tenantAware()->withTrashed()->whereIn('_id', $trashedFileIds)->each(function ($file) {
             $file->forceDelete();
         });
 
@@ -48,9 +49,9 @@ class EmptyTrash
         $trashedFolders = $this->folderRepository->getTrashed($owner);
         $trashedFolderIds = $trashedFolders->pluck('_id')->toArray();
         foreach ($trashedFolders as $folder) {
-            Share::forResource($folder)->delete();
+            $this->shareRepository->deleteForResource($folder);
         }
-        Folder::withTrashed()->whereIn('_id', $trashedFolderIds)->each(function ($folder) {
+        Folder::tenantAware()->withTrashed()->whereIn('_id', $trashedFolderIds)->each(function ($folder) {
             $folder->forceDelete();
         });
     }

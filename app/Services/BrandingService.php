@@ -27,7 +27,7 @@ class BrandingService
     {
         $config = config('branding', []);
 
-        $dbOverrides = Setting::where('group', 'branding')->get();
+        $dbOverrides = Setting::tenantAware()->where('group', 'branding')->get();
 
         foreach ($dbOverrides as $setting) {
             $key = $setting->key;

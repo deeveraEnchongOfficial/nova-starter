@@ -48,6 +48,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
+import { formatSize, folderColorClass, getFileIcon } from '@/lib/file-utils';
 import FilePreviewDialog from '@/Components/FilePreviewDialog';
 import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
 import ShareDialog from '@/Components/ShareDialog';
@@ -201,10 +202,11 @@ export default function FilesIndex({
                 setUploads((prev) =>
                     prev.map((u) => (u.id === uploadId ? { ...u, status: 'done', progress: 100 } : u)),
                 );
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Upload failed:', error);
-                const errorMsg = error?.response?.data?.message
-                    || error?.message
+                const err = error as { response?: { data?: { message?: string } }; message?: string };
+                const errorMsg = err?.response?.data?.message
+                    || err?.message
                     || 'Upload failed';
                 setUploads((prev) =>
                     prev.map((u) => (u.id === uploadId ? { ...u, status: 'error', error: errorMsg } : u)),
@@ -262,20 +264,6 @@ export default function FilesIndex({
         router.reload({ only: ['folders', 'files'] });
     }, [colorTarget, selectedColor]);
 
-    const folderColorClass = (color: string | null) => {
-        const colorMap: Record<string, string> = {
-            blue: 'text-blue-500',
-            green: 'text-green-500',
-            red: 'text-red-500',
-            purple: 'text-purple-500',
-            orange: 'text-orange-500',
-            pink: 'text-pink-500',
-            yellow: 'text-yellow-500',
-            gray: 'text-gray-500',
-        };
-        return color ? (colorMap[color] || 'text-yellow-500') : 'text-yellow-500';
-    };
-
     const handleToggleStar = useCallback(async (type: 'file' | 'folder', id: string) => {
         const endpoint = type === 'file' ? `/api/v1/files/${id}/star` : `/api/v1/folders/${id}/star`;
         await axios.post(endpoint);
@@ -317,31 +305,6 @@ export default function FilesIndex({
             setPreviewFile(imageFiles[currentImageIndex + 1]);
         }
     }, [currentImageIndex, imageFiles]);
-
-    const formatSize = (bytes: number) => {
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-        return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-    };
-
-    const getFileIcon = (mimeType: string, name?: string) => {
-        const ext = name?.split('.').pop()?.toLowerCase() ?? '';
-
-        if (mimeType.startsWith('image/')) return <FileImage className="w-8 h-8 text-blue-500" />;
-        if (mimeType.startsWith('video/')) return <FileVideo className="w-8 h-8 text-purple-500" />;
-        if (mimeType.startsWith('audio/')) return <FileAudio className="w-8 h-8 text-green-500" />;
-        if (mimeType.includes('pdf') || ext === 'pdf') return <FileText className="w-8 h-8 text-red-500" />;
-        if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext) || mimeType.includes('zip') || mimeType.includes('compressed'))
-            return <FileArchive className="w-8 h-8 text-amber-600" />;
-        if (['xls', 'xlsx', 'csv', 'ods'].includes(ext) || mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv'))
-            return <FileSpreadsheet className="w-8 h-8 text-green-600" />;
-        if (['doc', 'docx', 'odt', 'rtf', 'txt', 'md'].includes(ext) || mimeType.includes('document') || mimeType.includes('msword') || mimeType.startsWith('text/'))
-            return <FileText className="w-8 h-8 text-blue-600" />;
-        if (['js', 'ts', 'jsx', 'tsx', 'php', 'py', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'rs', 'swift', 'kt', 'html', 'css', 'scss', 'json', 'xml', 'yml', 'yaml', 'sh', 'sql'].includes(ext))
-            return <FileCode className="w-8 h-8 text-cyan-600" />;
-        return <FileIcon className="w-8 h-8 text-gray-500" />;
-    };
 
     const getFileDisplay = (file: FileItem, size: 'small' | 'large' = 'small') => {
         if (file.mime_type.startsWith('image/')) {

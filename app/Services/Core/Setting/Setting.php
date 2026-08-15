@@ -31,7 +31,7 @@ class Setting extends Model
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = static::where('key', $key)->first();
+        $setting = static::tenantAware()->where('key', $key)->first();
 
         if (! $setting) {
             return $default;
@@ -48,22 +48,24 @@ class Setting extends Model
             default => (string) $value,
         };
 
+        $match = ['key' => $key];
         $data = ['value' => $encoded, 'type' => $type, 'group' => $group, 'is_public' => $isPublic];
 
         if ($tenant) {
+            $match['tenant_type'] = 'core.organization';
+            $match['tenant_id'] = $tenant->getKey();
             $data['tenant_type'] = 'core.organization';
             $data['tenant_id'] = $tenant->getKey();
         } elseif (config('features.multi_tenant', false)) {
             $user = \Illuminate\Support\Facades\Auth::user();
             if ($user && $user->tenant_id && $user->tenant_type) {
+                $match['tenant_type'] = $user->tenant_type;
+                $match['tenant_id'] = $user->tenant_id;
                 $data['tenant_type'] = $user->tenant_type;
                 $data['tenant_id'] = $user->tenant_id;
             }
         }
 
-        static::updateOrCreate(
-            ['key' => $key],
-            $data
-        );
+        static::updateOrCreate($match, $data);
     }
 }

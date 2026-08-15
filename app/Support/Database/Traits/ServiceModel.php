@@ -30,14 +30,6 @@ trait ServiceModel
         $serviceName = $matches[1] ?? '';
 
         // Convert service name to snake case for connection name
-
-        // \Log::info([
-        //     'reflection' => $reflection,
-        //     'namespace' => $namespace,
-        //     'service_name' => $serviceName,
-        //     'connection' => Str::snake($serviceName),
-        // ]);
-
         return Str::snake($serviceName);
     }
 }

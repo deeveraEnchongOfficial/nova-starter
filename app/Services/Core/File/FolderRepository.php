@@ -3,7 +3,7 @@
 namespace App\Services\Core\File;
 
 use App\Support\Database\Traits\BaseRepository;
-use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class FolderRepository
@@ -33,7 +33,7 @@ class FolderRepository
             ->ownedBy($owner)
             ->when($parentId, fn ($q) => $q->where('parent_id', $parentId))
             ->when(! $parentId, fn ($q) => $q->whereNull('parent_id'))
-            ->when(! $includeTrashed, fn ($q) => $q)
+            ->when($includeTrashed, fn ($q) => $q->withTrashed())
             ->with($with)
             ->latest();
 
@@ -87,10 +87,7 @@ class FolderRepository
      */
     public function getSharedWithUser(Model $user)
     {
-        $sharedFolderIds = Share::forUser($user)
-            ->where('shareable_type', (new Folder)->getMorphClass())
-            ->pluck('shareable_id')
-            ->toArray();
+        $sharedFolderIds = app(ShareRepository::class)->sharedFolderIdsForUser($user);
 
         return Folder::tenantAware()
             ->whereIn('_id', $sharedFolderIds)
@@ -131,6 +128,7 @@ class FolderRepository
         while (! empty($queue)) {
             $batch = array_splice($queue, 0);
             $childIds = Folder::tenantAware()
+                ->withTrashed()
                 ->whereIn('parent_id', $batch)
                 ->pluck('_id')
                 ->toArray();

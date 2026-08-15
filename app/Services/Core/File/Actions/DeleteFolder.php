@@ -32,10 +32,10 @@ class DeleteFolder
         $descendantIds = $this->folderRepository->getAllDescendantIds($folder->id);
 
         // Soft-delete all descendant folders
-        Folder::whereIn('_id', $descendantIds)->delete();
+        Folder::tenantAware()->whereIn('_id', $descendantIds)->delete();
 
         // Soft-delete all files in this folder and all descendant folders
-        File::where(function ($query) use ($folder, $descendantIds) {
+        File::tenantAware()->where(function ($query) use ($folder, $descendantIds) {
             $query->where('folder_id', $folder->id)
                 ->orWhereIn('folder_id', $descendantIds);
         })->delete();

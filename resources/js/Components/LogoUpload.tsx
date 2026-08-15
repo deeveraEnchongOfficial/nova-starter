@@ -43,8 +43,8 @@ export default function LogoUpload({
 
             onChange(response.data.url);
             toast.success('Logo uploaded successfully.');
-        } catch (error: any) {
-            const message = error.response?.data?.message || 'Failed to upload logo.';
+        } catch (error: unknown) {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to upload logo.';
             toast.error(message);
         } finally {
             setUploading(false);

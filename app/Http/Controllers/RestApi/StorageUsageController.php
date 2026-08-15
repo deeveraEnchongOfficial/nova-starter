@@ -16,15 +16,15 @@ class StorageUsageController extends Controller
         $user = $request->user();
 
         // Sum of all non-trashed file sizes owned by the user
-        $usedBytes = File::ownedBy($user)
+        $usedBytes = File::tenantAware()->ownedBy($user)
             ->sum('size');
 
         // Count of files (non-trashed)
-        $fileCount = File::ownedBy($user)
+        $fileCount = File::tenantAware()->ownedBy($user)
             ->count();
 
         // Count of trashed files (use onlyTrashed for MongoDB compatibility)
-        $trashedCount = File::ownedBy($user)
+        $trashedCount = File::tenantAware()->ownedBy($user)
             ->onlyTrashed()
             ->count();
 

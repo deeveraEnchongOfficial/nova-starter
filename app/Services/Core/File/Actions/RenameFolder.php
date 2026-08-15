@@ -48,7 +48,7 @@ class RenameFolder
             Storage::disk($disk)->move($file, $newPath);
 
             // Keep the File record's path in sync with the new S3 key
-            File::where('path', $file)->update(['path' => $newPath]);
+            File::tenantAware()->where('path', $file)->update(['path' => $newPath]);
         }
     }
 
@@ -57,7 +57,7 @@ class RenameFolder
      */
     private function touchDescendants(Folder $folder): void
     {
-        $descendants = Folder::where('parent_id', $folder->id)->get();
+        $descendants = Folder::tenantAware()->where('parent_id', $folder->id)->get();
         foreach ($descendants as $descendant) {
             $descendant->save();
             $this->touchDescendants($descendant);

@@ -4,6 +4,7 @@ namespace App\Services\Core\Role\Actions;
 
 use App\Services\Core\Role\Role;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class UpsertRole
 {
@@ -19,8 +20,15 @@ class UpsertRole
     ): Role {
         $role->forceFill(['name' => $name]);
 
-        if (config('features.multi_tenant', false) && $tenant) {
-            $role->tenant()->associate($tenant);
+        if (config('features.multi_tenant', false)) {
+            if ($tenant) {
+                $role->tenant()->associate($tenant);
+            } else {
+                $user = Auth::user();
+                if ($user && $user->tenant_id && $user->tenant_type) {
+                    $role->tenant()->associate($user->tenant);
+                }
+            }
         }
 
         $role->save();

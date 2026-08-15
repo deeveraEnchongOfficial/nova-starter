@@ -73,3 +73,14 @@ export type PageProps<
     features: Features;
     ziggy: Config & { location: string };
 };
+
+export interface AxiosError {
+    response?: {
+        data?: {
+            message?: string;
+            errors?: Record<string, string[]>;
+        };
+        status: number;
+    };
+    message: string;
+}

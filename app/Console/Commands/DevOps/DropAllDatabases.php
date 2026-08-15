@@ -34,6 +34,12 @@ class DropAllDatabases extends Command
      */
     public function handle(): int
     {
+        if (app()->environment('production') && ! $this->option('force')) {
+            $this->error('Cannot drop databases in production without --force.');
+
+            return self::FAILURE;
+        }
+
         $client = DB::connection('core')->getClient();
 
         $databases = iterator_to_array($client->listDatabases());

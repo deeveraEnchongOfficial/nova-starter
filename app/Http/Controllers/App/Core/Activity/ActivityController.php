@@ -38,6 +38,14 @@ class ActivityController extends Controller
 
     public function show(Activity $activity)
     {
+        // Verify the activity belongs to the authenticated user's tenant
+        if (config('features.multi_tenant', false) && $activity->tenant_id !== null) {
+            $user = request()->user();
+            if (! $user || $activity->tenant_id !== $user->tenant_id || $activity->tenant_type !== $user->tenant_type) {
+                abort(404);
+            }
+        }
+
         $activity->load(['createdBy', 'subject']);
 
         return Inertia::render('ActivityLogs/Show', [

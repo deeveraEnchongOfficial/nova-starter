@@ -14,7 +14,7 @@ class AdminUserSeeder extends Seeder
         $data = [
             'first_name' => 'Super',
             'last_name' => 'Admin',
-            'password' => 'password',
+            'password' => env('ADMIN_PASSWORD', 'password'),
             'email_verified_at' => now(),
         ];
 

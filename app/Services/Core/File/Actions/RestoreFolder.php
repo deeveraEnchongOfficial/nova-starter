@@ -33,10 +33,10 @@ class RestoreFolder
 
         // Restore all descendant folders
         $descendantIds = $this->folderRepository->getAllDescendantIds($folder->id);
-        Folder::withTrashed()->whereIn('_id', $descendantIds)->restore();
+        Folder::tenantAware()->withTrashed()->whereIn('_id', $descendantIds)->restore();
 
         // Restore all files in this folder and descendants
-        File::withTrashed()->where(function ($query) use ($folder, $descendantIds) {
+        File::tenantAware()->withTrashed()->where(function ($query) use ($folder, $descendantIds) {
             $query->where('folder_id', $folder->id)
                 ->orWhereIn('folder_id', $descendantIds);
         })->restore();

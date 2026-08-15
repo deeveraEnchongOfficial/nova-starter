@@ -12,6 +12,7 @@ use App\Services\Core\File\Actions\ShareResource;
 use App\Services\Core\File\Actions\ToggleStar;
 use App\Services\Core\File\Folder;
 use App\Services\Core\File\FolderRepository;
+use App\Services\Core\File\Share;
 use App\Services\Core\File\SharePermission;
 use App\Services\Core\User\User;
 use Illuminate\Http\Request;
@@ -65,6 +66,10 @@ class FolderController extends Controller
         $folder = $this->folderRepository->findById($id);
 
         if (! $folder) {
+            return response()->json(['message' => 'Folder not found'], 404);
+        }
+
+        if (! $this->canAccessFolder($folder, request()->user())) {
             return response()->json(['message' => 'Folder not found'], 404);
         }
 
@@ -126,7 +131,7 @@ class FolderController extends Controller
      */
     public function restore(string $id)
     {
-        $folder = Folder::withTrashed()->find($id);
+        $folder = Folder::tenantAware()->withTrashed()->find($id);
 
         if (! $folder) {
             return response()->json(['message' => 'Folder not found'], 404);
@@ -183,5 +188,21 @@ class FolderController extends Controller
         );
 
         return response()->json(['id' => $share->id], 201);
+    }
+
+    /**
+     * Check if the user can access a folder (owner or shared with).
+     */
+    protected function canAccessFolder(Folder $folder, User $user): bool
+    {
+        if ($folder->created_by_id === $user->id) {
+            return true;
+        }
+
+        return Share::tenantAware()
+            ->where('shareable_type', $folder->getMorphClass())
+            ->where('shareable_id', $folder->id)
+            ->where('shared_with_id', $user->id)
+            ->exists();
     }
 }

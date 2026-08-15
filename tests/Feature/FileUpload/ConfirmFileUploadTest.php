@@ -34,7 +34,7 @@ class ConfirmFileUploadTest extends TestCase
     {
         $response = $this->postJson('/api/v1/files/confirm', [
             'purpose' => 'default',
-            'key' => 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt',
+            'key' => 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt',
         ]);
 
         $response->assertUnauthorized();
@@ -45,7 +45,7 @@ class ConfirmFileUploadTest extends TestCase
         $response = $this
             ->actingAs($this->user)
             ->postJson('/api/v1/files/confirm', [
-                'key' => 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt',
+                'key' => 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt',
             ]);
 
         $response->assertUnprocessable();
@@ -58,7 +58,7 @@ class ConfirmFileUploadTest extends TestCase
             ->actingAs($this->user)
             ->postJson('/api/v1/files/confirm', [
                 'purpose' => 'invalid_purpose',
-                'key' => 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt',
+                'key' => 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt',
             ]);
 
         $response->assertUnprocessable();
@@ -80,13 +80,13 @@ class ConfirmFileUploadTest extends TestCase
     public function test_validates_key_must_contain_user_id(): void
     {
         Storage::fake('s3');
-        Storage::disk('s3')->put('tmp-2026-07-30/some-other-user/default-test.txt', 'test');
+        Storage::disk('s3')->put('tmp-'.now()->format('Y-m-d').'/some-other-user/default-test.txt', 'test');
 
         $response = $this
             ->actingAs($this->user)
             ->postJson('/api/v1/files/confirm', [
                 'purpose' => 'default',
-                'key' => 'tmp-2026-07-30/some-other-user/default-test.txt',
+                'key' => 'tmp-'.now()->format('Y-m-d').'/some-other-user/default-test.txt',
             ]);
 
         $response->assertUnprocessable();
@@ -97,7 +97,7 @@ class ConfirmFileUploadTest extends TestCase
     {
         Storage::fake('s3');
 
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-nonexistent.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-nonexistent.txt';
 
         $response = $this
             ->actingAs($this->user)
@@ -113,7 +113,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_validates_category_must_be_valid_enum(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'test');
 
         $response = $this
@@ -131,7 +131,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_validates_description_max_length(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'test');
 
         $response = $this
@@ -149,7 +149,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_successful_confirm_returns_file_id_and_url(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'Hello World!');
 
         $response = $this
@@ -181,7 +181,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_confirm_moves_file_from_temporary_to_permanent_location(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'Hello World!');
 
         $response = $this
@@ -208,7 +208,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_confirm_associates_uploaded_by_user(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'Hello World!');
 
         $response = $this
@@ -229,7 +229,7 @@ class ConfirmFileUploadTest extends TestCase
     public function test_confirm_stores_metadata(): void
     {
         Storage::fake('s3');
-        $key = 'tmp-2026-07-30/'.$this->user->getKey().'/default-test.txt';
+        $key = 'tmp-'.now()->format('Y-m-d').'/'.$this->user->getKey().'/default-test.txt';
         Storage::disk('s3')->put($key, 'Hello World!');
 
         $response = $this

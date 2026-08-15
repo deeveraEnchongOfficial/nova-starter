@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\Route;
 // Authenticated routes
 Route::middleware(['auth:sanctum'])->group(function (): void {
     // Logo upload (settings)
-    Route::post('/v1/settings/logo', UploadLogoController::class)->name('v1.settings.logo');
+    Route::post('/v1/settings/logo', UploadLogoController::class)->name('v1.settings.logo')->middleware('permission:settings.edit');
 
     // Shareable users (for share dialog)
-    Route::get('/v1/shareable-users', ShareableUserController::class)->name('v1.shareable-users');
+    Route::get('/v1/shareable-users', ShareableUserController::class)->name('v1.shareable-users')->middleware('permission:files.view');
 
     // File upload (existing, extended with folder_id)
     Route::post('/v1/files/initiate', InitiateFileUploadController::class)->name('v1.files.initiate-upload')->middleware('permission:files.create');

@@ -38,7 +38,7 @@ class ModuleService
         $config = config('modules', []);
 
         try {
-            $dbOverrides = Setting::where('group', 'modules')->get();
+            $dbOverrides = Setting::tenantAware()->where('group', 'modules')->get();
 
             foreach ($dbOverrides as $setting) {
                 $parts = explode('.', $setting->key, 3);

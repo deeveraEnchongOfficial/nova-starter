@@ -23,9 +23,11 @@ class AsEnumArray implements CastsAttributes
             return [];
         }
 
-        return array_map(
-            fn ($item) => $this->enumClass::from($item),
-            $value
+        return array_filter(
+            array_map(
+                fn ($item) => $this->enumClass::tryFrom($item),
+                $value
+            )
         );
     }
 

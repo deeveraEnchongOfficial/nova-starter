@@ -59,19 +59,39 @@ export default function RolesIndex({
         const ids = Array.from(selectedIds);
         const count = ids.length;
         setDeleting(true);
+        let successCount = 0;
+        let failureCount = 0;
         ids.forEach((id, idx) => {
             router.delete(route('roles.destroy', id), {
                 preserveScroll: true,
                 onSuccess: () => {
+                    successCount++;
                     if (idx === count - 1) {
-                        toast.success(`Deleted ${count > 1 ? `${count} roles` : 'role'} successfully.`);
+                        setDeleting(false);
+                        if (failureCount > 0) {
+                            toast.error(`Failed to delete ${failureCount} role${failureCount > 1 ? 's' : ''}.`);
+                        }
+                        if (successCount > 0) {
+                            toast.success(`Deleted ${successCount > 1 ? `${successCount} roles` : 'role'} successfully.`);
+                        }
+                    }
+                },
+                onError: () => {
+                    failureCount++;
+                    if (idx === count - 1) {
+                        setDeleting(false);
+                        if (successCount > 0) {
+                            toast.success(`Deleted ${successCount > 1 ? `${successCount} roles` : 'role'} successfully.`);
+                        }
+                        if (failureCount > 0) {
+                            toast.error(`Failed to delete ${failureCount} role${failureCount > 1 ? 's' : ''}.`);
+                        }
                     }
                 },
             });
         });
         setSelectedIds(new Set());
         setShowDeleteDialog(false);
-        setDeleting(false);
     };
 
     const canDelete = hasPermission('roles.delete');

@@ -26,6 +26,11 @@ class RoleRepository
         return Role::tenantAware()->get();
     }
 
+    public function findManyByIds(array $ids): Collection
+    {
+        return Role::tenantAware()->whereIn('_id', $ids)->get();
+    }
+
     public function paginateAll(
         ?string $search = null,
         int $page = 1,

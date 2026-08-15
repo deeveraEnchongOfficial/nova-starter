@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class DeleteRole
 {
     /**
-     * Execute the action to update or create a role.
+     * Execute the action to delete a role.
      */
     public function execute(Role $role, User $deletedBy): Role
     {

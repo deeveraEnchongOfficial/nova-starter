@@ -100,8 +100,9 @@ export default function ShareDialog({
             const sharedUser = users.find((u) => u.id === selectedUserId);
             toast.success(`Shared "${resourceName}" with ${sharedUser?.name ?? 'user'}.`);
             onOpenChange(false);
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Failed to share resource.');
+        } catch (error: unknown) {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to share resource.';
+            toast.error(message);
         } finally {
             setSharing(false);
         }

@@ -53,7 +53,7 @@ class MoveFolder
      */
     private function touchDescendants(Folder $folder): void
     {
-        $descendants = Folder::where('parent_id', $folder->id)->get();
+        $descendants = Folder::tenantAware()->where('parent_id', $folder->id)->get();
         foreach ($descendants as $descendant) {
             $descendant->save();
             $this->touchDescendants($descendant);

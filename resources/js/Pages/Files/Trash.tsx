@@ -7,6 +7,7 @@ import type { PageProps } from '@/types';
 import axios from 'axios';
 import FilesTabs from '@/Components/FilesTabs';
 import { DataTable, type Column } from '@/Components/data-table';
+import { formatSize } from '@/lib/file-utils';
 
 interface TrashedItem {
     id: string;
@@ -43,12 +44,6 @@ export default function FilesTrash({
             console.error('Failed to empty trash:', error);
         }
     }, []);
-
-    const formatSize = (bytes: number) => {
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    };
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString();

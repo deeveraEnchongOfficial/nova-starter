@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\App\Core\User;
 
 use App\Http\Controllers\Controller;
-use App\Services\Core\Role\Role;
+use App\Services\Core\Role\RoleRepository;
 use App\Services\Core\User\Actions\UpsertUser;
 use App\Services\Core\User\User;
 use App\Services\Core\User\UserRepository;
@@ -16,6 +16,7 @@ class UserController extends Controller
     public function __construct(
         private readonly UpsertUser $upsertUser,
         private readonly UserRepository $userRepository,
+        private readonly RoleRepository $roleRepository,
     ) {}
 
     public function index(Request $request)
@@ -34,7 +35,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get(['id', 'name']);
+        $roles = $this->roleRepository->findAll(['id', 'name']);
 
         return Inertia::render('Users/Create', [
             'roles' => $roles,
@@ -65,7 +66,7 @@ class UserController extends Controller
         );
 
         if (! empty($validated['roles'])) {
-            $roleModels = Role::whereIn('_id', $validated['roles'])->get();
+            $roleModels = $this->roleRepository->findManyByIds($validated['roles']);
             $user->assignRole($roleModels);
         }
 
@@ -75,7 +76,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::orderBy('name')->get(['id', 'name']);
+        $roles = $this->roleRepository->findAll(['id', 'name']);
         $user->load('roles');
 
         return Inertia::render('Users/Edit', [
@@ -107,7 +108,7 @@ class UserController extends Controller
         );
 
         if (! empty($validated['roles'])) {
-            $roleModels = Role::whereIn('_id', $validated['roles'])->get();
+            $roleModels = $this->roleRepository->findManyByIds($validated['roles']);
             $user->syncRoles($roleModels);
         }
 
@@ -115,8 +116,13 @@ class UserController extends Controller
             ->with('message', 'User updated successfully.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if ($user->id === $request->user()->id) {
+            return redirect()->back()
+                ->withErrors('You cannot delete your own account.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')
