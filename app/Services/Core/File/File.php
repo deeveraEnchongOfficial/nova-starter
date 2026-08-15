@@ -2,6 +2,7 @@
 
 namespace App\Services\Core\File;
 
+use App\Support\Database\Traits\BelongsToATenant;
 use App\Support\Database\Traits\HasCreatedBy;
 use App\Support\Database\Traits\HasMetadata;
 use App\Support\Database\Traits\ServiceModel;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class File extends Model
 {
-    use HasCreatedBy, HasMetadata, ServiceModel, SoftDeletes;
+    use BelongsToATenant, HasCreatedBy, HasMetadata, ServiceModel, SoftDeletes;
 
     protected $appends = ['is_starred', 'url'];
 

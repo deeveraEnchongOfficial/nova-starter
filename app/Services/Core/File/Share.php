@@ -3,6 +3,7 @@
 namespace App\Services\Core\File;
 
 use App\Services\Core\User\User;
+use App\Support\Database\Traits\BelongsToATenant;
 use App\Support\Database\Traits\HasCreatedBy;
 use App\Support\Database\Traits\ServiceModel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Share extends Model
 {
-    use HasCreatedBy, ServiceModel;
+    use BelongsToATenant, HasCreatedBy, ServiceModel;
 
     protected $casts = [
         'created_at' => 'datetime',

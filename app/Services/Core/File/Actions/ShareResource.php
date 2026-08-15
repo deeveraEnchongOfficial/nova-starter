@@ -41,6 +41,12 @@ class ShareResource
         $share->shareable()->associate($resource);
         $share->sharedWith()->associate($sharedWith);
         $share->createdBy()->associate($sharedBy);
+
+        // Set tenant from the sharing user when multi-tenant is enabled
+        if (config('features.multi_tenant', false) && $sharedBy->tenant_id && $sharedBy->tenant_type) {
+            $share->tenant()->associate($sharedBy->tenant);
+        }
+
         $share->save();
 
         return $share;

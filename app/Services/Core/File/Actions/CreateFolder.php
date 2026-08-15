@@ -37,6 +37,12 @@ class CreateFolder
         ], $metadata));
 
         $folder->createdBy()->associate($owner);
+
+        // Set tenant from the creating user when multi-tenant is enabled
+        if (config('features.multi_tenant', false) && $owner->tenant_id && $owner->tenant_type) {
+            $folder->tenant()->associate($owner->tenant);
+        }
+
         $folder->save();
 
         // Create the S3 prefix by placing a .keep file

@@ -170,9 +170,15 @@ class FileApiController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        // Use downloadUrl() so the presigned URL includes a
-        // Content-Disposition: attachment header, forcing the browser
-        // to download the file instead of opening it inline.
-        return response()->json(['url' => $file->downloadUrl()]);
+        try {
+            // Use downloadUrl() so the presigned URL includes a
+            // Content-Disposition: attachment header, forcing the browser
+            // to download the file instead of opening it inline.
+            return response()->json(['url' => $file->downloadUrl()]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Failed to generate download URL'], 500);
+        }
     }
 }

@@ -19,7 +19,7 @@ class FileRepository
 
     public function findById(string $id): ?File
     {
-        return File::find($id);
+        return File::tenantAware()->find($id);
     }
 
     /**
@@ -39,7 +39,8 @@ class FileRepository
         bool $includeTrashed = false,
         array $with = ['folder'],
     ) {
-        return File::ownedBy($owner)
+        return File::tenantAware()
+            ->ownedBy($owner)
             ->when($folderId, fn ($q) => $q->where('folder_id', $folderId))
             ->when(! $folderId, fn ($q) => $q->whereNull('folder_id'))
             ->when(! $includeTrashed, fn ($q) => $q)
@@ -53,7 +54,8 @@ class FileRepository
      */
     public function search(string $term, Model $owner, ?string $folderId = null, int $limit = 20)
     {
-        return File::ownedBy($owner)
+        return File::tenantAware()
+            ->ownedBy($owner)
             ->when($folderId, function (Builder $query, string $folderId): void {
                 $query->where('folder_id', $folderId);
             })
@@ -70,8 +72,8 @@ class FileRepository
      */
     public function getStarred(Model $owner)
     {
-        return File::ownedBy($owner)
-
+        return File::tenantAware()
+            ->ownedBy($owner)
             ->where('__metadata.is_starred', true)
             ->latest()
             ->get();
@@ -82,7 +84,8 @@ class FileRepository
      */
     public function getTrashed(Model $owner)
     {
-        return File::ownedBy($owner)
+        return File::tenantAware()
+            ->ownedBy($owner)
             ->onlyTrashed()
             ->latest('deleted_at')
             ->get();
@@ -98,8 +101,8 @@ class FileRepository
             ->pluck('shareable_id')
             ->toArray();
 
-        return File::whereIn('_id', $sharedFileIds)
-
+        return File::tenantAware()
+            ->whereIn('_id', $sharedFileIds)
             ->latest()
             ->get();
     }
@@ -115,10 +118,9 @@ class FileRepository
         array $select = ['*'],
         array $filters = [],
     ): LengthAwarePaginator {
-        $query = File::query()
+        $query = File::tenantAware()
             ->with($with)
             ->latest()
-
             ->where('__metadata.listable', true);
 
         if (! empty($search)) {

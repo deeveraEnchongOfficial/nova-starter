@@ -17,7 +17,7 @@ class FolderRepository
 
     public function findById(string $id): ?Folder
     {
-        return Folder::find($id);
+        return Folder::tenantAware()->find($id);
     }
 
     /**
@@ -29,7 +29,8 @@ class FolderRepository
         bool $includeTrashed = false,
         array $with = ['children'],
     ) {
-        $query = Folder::ownedBy($owner)
+        $query = Folder::tenantAware()
+            ->ownedBy($owner)
             ->when($parentId, fn ($q) => $q->where('parent_id', $parentId))
             ->when(! $parentId, fn ($q) => $q->whereNull('parent_id'))
             ->when(! $includeTrashed, fn ($q) => $q)
@@ -44,7 +45,8 @@ class FolderRepository
      */
     public function search(string $term, Model $owner, ?string $folderId = null, int $limit = 20)
     {
-        return Folder::ownedBy($owner)
+        return Folder::tenantAware()
+            ->ownedBy($owner)
             ->when($folderId, function (Builder $query, string $folderId): void {
                 $query->where('parent_id', $folderId);
             })
@@ -61,8 +63,8 @@ class FolderRepository
      */
     public function getStarred(Model $owner)
     {
-        return Folder::ownedBy($owner)
-
+        return Folder::tenantAware()
+            ->ownedBy($owner)
             ->where('__metadata.is_starred', true)
             ->latest()
             ->get();
@@ -73,7 +75,8 @@ class FolderRepository
      */
     public function getTrashed(Model $owner)
     {
-        return Folder::ownedBy($owner)
+        return Folder::tenantAware()
+            ->ownedBy($owner)
             ->onlyTrashed()
             ->latest('deleted_at')
             ->get();
@@ -89,7 +92,8 @@ class FolderRepository
             ->pluck('shareable_id')
             ->toArray();
 
-        return Folder::whereIn('_id', $sharedFolderIds)
+        return Folder::tenantAware()
+            ->whereIn('_id', $sharedFolderIds)
             ->latest()
             ->get();
     }
@@ -104,8 +108,8 @@ class FolderRepository
 
         while (! empty($queue)) {
             $batch = array_splice($queue, 0);
-            $childIds = Folder::whereIn('parent_id', $batch)
-
+            $childIds = Folder::tenantAware()
+                ->whereIn('parent_id', $batch)
                 ->pluck('_id')
                 ->toArray();
 
@@ -126,7 +130,8 @@ class FolderRepository
 
         while (! empty($queue)) {
             $batch = array_splice($queue, 0);
-            $childIds = Folder::whereIn('parent_id', $batch)
+            $childIds = Folder::tenantAware()
+                ->whereIn('parent_id', $batch)
                 ->pluck('_id')
                 ->toArray();
 

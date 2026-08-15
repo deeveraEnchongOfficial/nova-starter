@@ -66,6 +66,11 @@ class ConfirmFileUpload
 
         if ($uploadedBy) {
             $file->createdBy()->associate($uploadedBy);
+
+            // Set tenant from the uploading user when multi-tenant is enabled
+            if (config('features.multi_tenant', false) && $uploadedBy->tenant_id && $uploadedBy->tenant_type) {
+                $file->tenant()->associate($uploadedBy->tenant);
+            }
         }
 
         $file->save();

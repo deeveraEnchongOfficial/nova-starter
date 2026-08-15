@@ -38,7 +38,7 @@ return [
         'primary' => [
             'driver' => 'mongodb',
             'dsn' => env('DB_DSN', 'mongodb://127.0.0.1:27017'),
-            'database' => env('DB_PRIMARY_DATABASE', Str::lower(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_primary'),
+            'database' => env('DB_PRIMARY_DATABASE', Str::slug(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_primary'),
             'username' => env('DB_USERNAME', ''),
             'password' => env('DB_PASSWORD', ''),
             'options' => [
@@ -52,7 +52,7 @@ return [
         'cache' => [
             'driver' => 'mongodb',
             'dsn' => env('DB_CACHE_DSN', env('DB_DSN', 'mongodb://127.0.0.1:27017')),
-            'database' => env('DB_CACHE_DATABASE', Str::lower(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_cache'),
+            'database' => env('DB_CACHE_DATABASE', Str::slug(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_cache'),
             'username' => env('DB_CACHE_USERNAME', env('DB_USERNAME', '')),
             'password' => env('DB_CACHE_PASSWORD', env('DB_PASSWORD', '')),
             'options' => [
@@ -63,7 +63,7 @@ return [
         'core' => [
             'driver' => 'mongodb',
             'dsn' => env('DB_CORE_SERVICE_DSN', env('DB_DSN', 'mongodb://127.0.0.1:27017')),
-            'database' => env('DB_CORE_SERVICE_DATABASE', Str::lower(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_core'),
+            'database' => env('DB_CORE_SERVICE_DATABASE', Str::slug(env('APP_NAME', 'nova-starter')).'_'.env('APP_ENV').'_core'),
             'username' => env('DB_CORE_SERVICE_USERNAME', env('DB_USERNAME', '')),
             'password' => env('DB_CORE_SERVICE_PASSWORD', env('DB_PASSWORD', '')),
             'options' => [
