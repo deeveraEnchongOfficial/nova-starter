@@ -8,12 +8,6 @@ import {
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/Components/ui/dialog';
-import {
     Folder as FolderIcon,
     File as FileIcon,
     FileText,
@@ -31,13 +25,14 @@ import {
     Play,
     Share2,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
 import FilesTabs from '@/Components/FilesTabs';
 import ImageThumbnail from '@/Components/ImageThumbnail';
 import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
 import ShareDialog from '@/Components/ShareDialog';
+import FilePreviewDialog from '@/Components/FilePreviewDialog';
 
 interface StarredFolder {
     id: string;
@@ -64,8 +59,6 @@ export default function FilesStarred({
     starredFiles: StarredFile[];
 }>) {
     const [previewFile, setPreviewFile] = useState<StarredFile | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [previewLoading, setPreviewLoading] = useState(false);
     const [shareTarget, setShareTarget] = useState<{ type: 'file' | 'folder'; id: string; name: string } | null>(null);
     const { play: playAudio } = useAudioPlayer();
 
@@ -103,30 +96,32 @@ export default function FilesStarred({
         return mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/');
     };
 
-    const isImage = (mimeType: string) => mimeType.startsWith('image/');
-    const isVideo = (mimeType: string) => mimeType.startsWith('video/');
-    const isAudio = (mimeType: string) => mimeType.startsWith('audio/');
-
-    const handlePreview = useCallback(async (file: StarredFile) => {
+    const handlePreview = useCallback((file: StarredFile) => {
         setPreviewFile(file);
-        setPreviewUrl(null);
-        setPreviewLoading(true);
-        try {
-            const response = await axios.get(`/api/v1/files/${file.id}/download`);
-            setPreviewUrl(response.data.url);
-        } catch {
-            setPreviewUrl(null);
-        } finally {
-            setPreviewLoading(false);
-        }
     }, []);
 
-    useEffect(() => {
-        if (!previewFile) {
-            setPreviewUrl(null);
-            setPreviewLoading(false);
+    // Build the list of image files for prev/next navigation
+    const imageFiles = useMemo(
+        () => starredFiles.filter((f) => f.mime_type.startsWith('image/')),
+        [starredFiles],
+    );
+
+    const currentImageIndex = useMemo(
+        () => (previewFile ? imageFiles.findIndex((f) => f.id === previewFile.id) : -1),
+        [previewFile, imageFiles],
+    );
+
+    const handlePrevImage = useCallback(() => {
+        if (currentImageIndex > 0) {
+            setPreviewFile(imageFiles[currentImageIndex - 1]);
         }
-    }, [previewFile]);
+    }, [currentImageIndex, imageFiles]);
+
+    const handleNextImage = useCallback(() => {
+        if (currentImageIndex >= 0 && currentImageIndex < imageFiles.length - 1) {
+            setPreviewFile(imageFiles[currentImageIndex + 1]);
+        }
+    }, [currentImageIndex, imageFiles]);
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) return `${bytes} B`;
@@ -317,52 +312,12 @@ export default function FilesStarred({
             </div>
 
             {/* Preview Dialog */}
-            <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
-                <DialogContent className="max-w-none! gap-0! p-0! w-[95vw] h-[95vh] flex flex-col">
-                    <DialogHeader className="px-6 py-4 border-b shrink-0">
-                        <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex overflow-auto flex-1 justify-center items-center bg-black/5">
-                        {previewLoading ? (
-                            <p className="text-muted-foreground">Loading...</p>
-                        ) : previewUrl ? (
-                            isImage(previewFile?.mime_type ?? '') ? (
-                                <img
-                                    src={previewUrl}
-                                    alt={previewFile?.name}
-                                    className="object-contain max-w-full max-h-full"
-                                />
-                            ) : isVideo(previewFile?.mime_type ?? '') ? (
-                                <video
-                                    src={previewUrl}
-                                    controls
-                                    autoPlay
-                                    className="object-contain max-w-full max-h-full"
-                                >
-                                    Your browser does not support video playback.
-                                </video>
-                            ) : isAudio(previewFile?.mime_type ?? '') ? (
-                                <div className="flex flex-col gap-4 items-center p-8 w-full max-w-md">
-                                    <FileAudio className="w-24 h-24 text-green-500" />
-                                    <p className="text-sm text-muted-foreground">{previewFile?.name}</p>
-                                    <audio
-                                        src={previewUrl}
-                                        controls
-                                        autoPlay
-                                        className="w-full"
-                                    >
-                                        Your browser does not support audio playback.
-                                    </audio>
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground">Preview not available</p>
-                            )
-                        ) : (
-                            <p className="text-muted-foreground">Failed to load preview</p>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <FilePreviewDialog
+                file={previewFile}
+                onClose={() => setPreviewFile(null)}
+                onPrev={currentImageIndex > 0 ? handlePrevImage : undefined}
+                onNext={currentImageIndex >= 0 && currentImageIndex < imageFiles.length - 1 ? handleNextImage : undefined}
+            />
 
             {/* Share Dialog */}
             {shareTarget && (

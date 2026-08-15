@@ -50,7 +50,10 @@ class UploadLogoController extends Controller
 
         Storage::disk('s3')->put($key, file_get_contents($file->getRealPath()), 'public-read');
 
-        $url = Storage::disk('s3')->url($key);
+        // Serve public files through the app's /storage/ nginx proxy so the
+        // URL is always relative to APP_URL and never depends on MinIO's IP/port.
+        $bucket = config('filesystems.disks.s3.bucket');
+        $url = rtrim(config('app.url'), '/') . '/storage/' . $bucket . '/' . $key;
 
         return response()->json([
             'url' => $url,

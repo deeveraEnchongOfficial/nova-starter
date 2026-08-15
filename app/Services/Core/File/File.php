@@ -40,43 +40,87 @@ class File extends Model
      * Get a presigned URL for this file (accessible from the browser).
      *
      * Uses the external signing_url endpoint so the browser can resolve
-     * the hostname and the signature matches. Falls back to the disk's
-     * default url() when signing_url is not configured.
+     * the hostname and the signature matches. When accessed from a non-
+     * localhost host (e.g. LAN IP or Tailscale), the signing URL auto-
+     * adapts to use the request host with MinIO's exposed port so the
+     * browser can reach MinIO from any device.
      */
     public function url(): Attribute
     {
         return Attribute::make(
-            get: function () {
-                $diskConfig = config("filesystems.disks.{$this->disk}");
-                $signingUrl = $diskConfig['signing_url'] ?? null;
-                $endpoint = $diskConfig['endpoint'] ?? null;
-
-                if ($signingUrl && $endpoint) {
-                    $client = new \Aws\S3\S3Client([
-                        'region' => $diskConfig['region'],
-                        'version' => 'latest',
-                        'signature_version' => 'v4',
-                        'use_path_style_endpoint' => $diskConfig['use_path_style_endpoint'] ?? false,
-                        'credentials' => [
-                            'key' => $diskConfig['key'],
-                            'secret' => $diskConfig['secret'],
-                        ],
-                        'endpoint' => $signingUrl,
-                    ]);
-
-                    $ttl = (int) ($diskConfig['presigned_request_ttl'] ?? 5);
-
-                    $command = $client->getCommand('GetObject', [
-                        'Bucket' => $diskConfig['bucket'],
-                        'Key' => $this->path,
-                    ]);
-
-                    return (string) $client->createPresignedRequest($command, now()->addMinutes($ttl))->getUri();
-                }
-
-                return Storage::disk($this->disk)->url($this->path);
-            }
+            get: fn () => $this->presignedUrl(),
         );
+    }
+
+    /**
+     * Get a presigned URL that forces the browser to download the file
+     * (Content-Disposition: attachment) instead of displaying it inline.
+     */
+    public function downloadUrl(): string
+    {
+        return $this->presignedUrl([
+            'ResponseContentDisposition' => 'attachment; filename="' . rawurlencode($this->name) . '"',
+        ]);
+    }
+
+    /**
+     * Build a presigned GetObject URL for this file.
+     *
+     * Uses the external signing_url endpoint so the browser can resolve
+     * the hostname and the signature matches. When accessed from a non-
+     * localhost host (e.g. LAN IP or Tailscale), the signing URL auto-
+     * adapts to use the request host with MinIO's exposed port so the
+     * browser can reach MinIO from any device.
+     *
+     * @param  array<string, mixed>  $extra  Additional GetObject parameters
+     *                                       (e.g. ResponseContentDisposition).
+     */
+    protected function presignedUrl(array $extra = []): string
+    {
+        $diskConfig = config("filesystems.disks.{$this->disk}");
+        $signingUrl = $diskConfig['signing_url'] ?? null;
+        $endpoint = $diskConfig['endpoint'] ?? null;
+
+        // Auto-adapt signing URL for non-localhost access (LAN IP,
+        // Tailscale, tunnel, etc.) so presigned URLs use the same
+        // host the browser is connecting to.
+        if ($signingUrl && app()->runningInConsole() === false) {
+            $request = request();
+            if ($request) {
+                $requestHost = $request->getHost();
+                $isLocalhost = str_contains($requestHost, 'localhost') || $requestHost === '127.0.0.1';
+
+                if (! $isLocalhost) {
+                    $minioPort = env('LOCAL_NOVA_MINIO_API_PORT', '9000');
+                    $signingUrl = 'http://' . $requestHost . ':' . $minioPort;
+                }
+            }
+        }
+
+        if ($signingUrl && $endpoint) {
+            $client = new \Aws\S3\S3Client([
+                'region' => $diskConfig['region'],
+                'version' => 'latest',
+                'signature_version' => 'v4',
+                'use_path_style_endpoint' => $diskConfig['use_path_style_endpoint'] ?? false,
+                'credentials' => [
+                    'key' => $diskConfig['key'],
+                    'secret' => $diskConfig['secret'],
+                ],
+                'endpoint' => $signingUrl,
+            ]);
+
+            $ttl = (int) ($diskConfig['presigned_request_ttl'] ?? 5);
+
+            $command = $client->getCommand('GetObject', array_merge([
+                'Bucket' => $diskConfig['bucket'],
+                'Key' => $this->path,
+            ], $extra));
+
+            return (string) $client->createPresignedRequest($command, now()->addMinutes($ttl))->getUri();
+        }
+
+        return Storage::disk($this->disk)->url($this->path);
     }
 
     /**

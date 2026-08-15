@@ -23,6 +23,10 @@ RUN docker-php-ext-install \
     mbstring zip exif pcntl \
     gd bcmath
 
+# MongoDB PHP extension (pinned to 1.x for mongodb/mongodb ^1.21 compatibility)
+RUN pecl install mongodb-1.21.0 \
+    && docker-php-ext-enable mongodb
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html

@@ -7,12 +7,6 @@ import {
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/Components/ui/dialog';
-import {
     Folder as FolderIcon,
     File as FileIcon,
     FileText,
@@ -28,12 +22,13 @@ import {
     Play,
     Users,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { PageProps } from '@/types';
 import axios from 'axios';
 import FilesTabs from '@/Components/FilesTabs';
 import ImageThumbnail from '@/Components/ImageThumbnail';
 import { useAudioPlayer, type AudioTrack } from '@/contexts/AudioPlayerContext';
+import FilePreviewDialog from '@/Components/FilePreviewDialog';
 
 interface SharedFolder {
     id: string;
@@ -59,8 +54,6 @@ export default function FilesShared({
     sharedFolders: SharedFolder[];
 }>) {
     const [previewFile, setPreviewFile] = useState<SharedFile | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [previewLoading, setPreviewLoading] = useState(false);
     const { play: playAudio } = useAudioPlayer();
 
     const handlePlayAudio = useCallback((file: SharedFile) => {
@@ -81,26 +74,32 @@ export default function FilesShared({
         return mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/');
     };
 
-    const handlePreview = useCallback(async (file: SharedFile) => {
+    const handlePreview = useCallback((file: SharedFile) => {
         setPreviewFile(file);
-        setPreviewUrl(null);
-        setPreviewLoading(true);
-        try {
-            const response = await axios.get(`/api/v1/files/${file.id}/download`);
-            setPreviewUrl(response.data.url);
-        } catch {
-            setPreviewUrl(null);
-        } finally {
-            setPreviewLoading(false);
-        }
     }, []);
 
-    useEffect(() => {
-        if (!previewFile) {
-            setPreviewUrl(null);
-            setPreviewLoading(false);
+    // Build the list of image files for prev/next navigation
+    const imageFiles = useMemo(
+        () => sharedFiles.filter((f) => f.mime_type.startsWith('image/')),
+        [sharedFiles],
+    );
+
+    const currentImageIndex = useMemo(
+        () => (previewFile ? imageFiles.findIndex((f) => f.id === previewFile.id) : -1),
+        [previewFile, imageFiles],
+    );
+
+    const handlePrevImage = useCallback(() => {
+        if (currentImageIndex > 0) {
+            setPreviewFile(imageFiles[currentImageIndex - 1]);
         }
-    }, [previewFile]);
+    }, [currentImageIndex, imageFiles]);
+
+    const handleNextImage = useCallback(() => {
+        if (currentImageIndex >= 0 && currentImageIndex < imageFiles.length - 1) {
+            setPreviewFile(imageFiles[currentImageIndex + 1]);
+        }
+    }, [currentImageIndex, imageFiles]);
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) return `${bytes} B`;
@@ -246,30 +245,12 @@ export default function FilesShared({
             </div>
 
             {/* Preview Dialog */}
-            <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
-                <DialogContent className="max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex justify-center items-center min-h-[300px]">
-                        {previewLoading ? (
-                            <p className="text-muted-foreground">Loading preview...</p>
-                        ) : previewUrl ? (
-                            previewFile?.mime_type.startsWith('image/') ? (
-                                <img src={previewUrl} alt={previewFile.name} className="max-w-full max-h-[60vh] rounded-lg" />
-                            ) : previewFile?.mime_type.startsWith('video/') ? (
-                                <video src={previewUrl} controls className="max-w-full max-h-[60vh] rounded-lg" />
-                            ) : previewFile?.mime_type.startsWith('audio/') ? (
-                                <audio src={previewUrl} controls className="w-full" />
-                            ) : (
-                                <p className="text-muted-foreground">Preview not available for this file type.</p>
-                            )
-                        ) : (
-                            <p className="text-muted-foreground">Preview not available.</p>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <FilePreviewDialog
+                file={previewFile}
+                onClose={() => setPreviewFile(null)}
+                onPrev={currentImageIndex > 0 ? handlePrevImage : undefined}
+                onNext={currentImageIndex >= 0 && currentImageIndex < imageFiles.length - 1 ? handleNextImage : undefined}
+            />
         </AuthenticatedLayout>
     );
 }

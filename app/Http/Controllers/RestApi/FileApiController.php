@@ -170,8 +170,9 @@ class FileApiController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        // The url attribute already generates a presigned URL using the
-        // external signing_url endpoint when configured.
-        return response()->json(['url' => $file->url]);
+        // Use downloadUrl() so the presigned URL includes a
+        // Content-Disposition: attachment header, forcing the browser
+        // to download the file instead of opening it inline.
+        return response()->json(['url' => $file->downloadUrl()]);
     }
 }
